@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <TieredCompilation>false</TieredCompilation>
+    <Configuration>Release</Configuration>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Raylib-cs" Version="6.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+      <Compile Include="Lib_Timer.fs" />
+      <Compile Include="01_Extensions.fs" />
+      <Compile Include="02_DataTypes.fs" />
+      <Compile Include="03_Components.fs" />
+      <Compile Include="04_State.fs" />
+      <Compile Include="05_Entity.fs" />
+      <Compile Include="06_Systems.fs" />
+      <Compile Include="07_Utility.fs" />
+      <Compile Include="09_Assets.fs" />
+      <Compile Include="10_Program.fs" />
+  </ItemGroup>
+</Project>
