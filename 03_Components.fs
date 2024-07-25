@@ -82,7 +82,7 @@ module Transform =
     let inline fromVector pos : Transform = from {
         Parent   = ValueNone
         Position = pos
-        Rotation = 0f<rad>
+        Rotation = 0f<deg>
         Scale    = Vector2.One
     }
 
@@ -90,7 +90,7 @@ module Transform =
     let inline fromPosition x y : Transform = from {
         Parent   = ValueNone
         Position = Vector2(x,y)
-        Rotation = 0f<rad>
+        Rotation = 0f<deg>
         Scale    = Vector2.One
     }
 
@@ -117,7 +117,7 @@ module Transform =
         t
 
     let inline setRotationVector vector (t:Transform) : Transform =
-        t.Rotation <- Vector2.angle vector
+        t.Rotation <- Radian.toDeg (Vector2.angle vector)
         t
 
     let inline setScale newScale (t:Transform) : Transform =
@@ -135,8 +135,8 @@ module Transform =
         t.Rotation <- t.Rotation + rotation
 
     /// Adds rotation to Transform specified in degree
-    let inline addRotationDeg rot (t:Transform) : unit =
-        t.Rotation <- t.Rotation + (Radian.fromDeg rot)
+    let inline addRotationRad (rot:float32<rad>) (t:Transform) : unit =
+        t.Rotation <- t.Rotation + (Radian.toDeg rot)
 
 
 module Sprite =
@@ -190,7 +190,7 @@ module View =
     let fromSprite origin layer (sprite:Sprite) : View = {
         Sprite    = sprite
         Tint      = Color.White
-        Rotation  = 0.0f<rad>
+        Rotation  = 0.0f<deg>
         Origin    = Origin.toPosition (float32 sprite.SrcRect.Width) (float32 sprite.SrcRect.Height) origin
         Scale     = Vector2.One
         Layer     = layerToFloat layer
@@ -213,7 +213,7 @@ module View =
                 else failwith "Sheet has no Sprites"
             )
         Tint      = Color.White
-        Rotation  = 0.0f<rad>
+        Rotation  = 0.0f<deg>
         Origin    = Vector2.Zero
         Scale     = Vector2.One
         Layer     = layerToFloat layer
@@ -285,7 +285,7 @@ module Sheets =
         let sprite = sheets.Sheets.[sheets.Default].Sprites.[0]
         View.create {
             Sprite   = sprite
-            Rotation = 0f<rad>
+            Rotation = 0f<deg>
             Tint     = Color.White
             Scale    = Vector2.One
             Layer    = View.layerToFloat layer

@@ -368,7 +368,7 @@ module FPS =
     let draw () =
         state.Draws <- state.Draws + 1
         Raylib.DrawText(
-            text     = String.Format("Update/Draw: {0:0.00} {1:0.00}", state.UpdateFPS, state.DrawFPS),
+            text     = String.Format("Update/Draw: {0:0} {1:0}", state.UpdateFPS, state.DrawFPS),
             posX     = 3,
             posY     = 3,
             fontSize = 20,

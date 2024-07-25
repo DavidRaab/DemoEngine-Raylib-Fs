@@ -33,7 +33,7 @@ let boxes assets =
         e.addTransform (Transform.fromPosition 0f 0f)
         e.addMovement {
             Direction = ValueNone // ValueSome (Relative (Vector2.Right * 50f))
-            Rotation  = ValueSome 2f<rad>
+            Rotation  = ValueSome 90f<deg>
         }
     )
 
@@ -64,10 +64,9 @@ let boxes assets =
                 )
                 box.addView      (Sheets.createView BG1 Center assets.Box)
                 box.addAnimation (Animation.create assets.Box)
-                // box |> State.View.map (View.withOrigin Center)
                 box.addMovement {
                     Direction = ValueNone //ValueSome (Relative (Vector2.Right * 25f))
-                    Rotation  = ValueSome (2f<rad>)
+                    Rotation  = ValueSome (90f<deg>)
                 }
             ))
 
@@ -85,9 +84,7 @@ let boxes assets =
                     then Absolute (Vector2.Zero,10f)
                     else Relative (Vector2.randomDirection 25f)
                 )
-                Rotation = ValueSome(
-                    Radian.fromDeg (rng.NextSingle() * 60f<deg> - 30f<deg>)
-                )
+                Rotation = ValueSome(rng.NextSingle() * 60f<deg> - 30f<deg>)
             }
         State ()
     ))
@@ -135,14 +132,14 @@ let initModel assets =
         e.addView (View.fromSpriteCenter FG1 assets.Sprites.Arrow)
         Systems.Timer.addTimer (Timer.every (sec 0.1) () (fun _ dt ->
             e |> State.Transform.fetch (fun tf ->
-                Transform.addRotation 0.1f<rad> tf
+                Transform.addRotation 10f<deg> tf
             )
             State ()
         ))
     )
 
     let knight = Entity.init (fun e ->
-        e.addTransform (Transform.fromPosition 320f 200f)
+        e.addTransform (Transform.fromPosition 0f 0f)
         e.addView (
             Sheets.createView FG1 Top assets.Knight
             |> View.setScale (Vector2.create 2f 2f)
@@ -217,9 +214,8 @@ let initModel assets =
     )
 
     // Let stars rotate at 60 fps and 1° each frame
-    let deg1 = Radian.fromDeg 1f<deg>
     Systems.Timer.addTimer (Timer.every (sec (1.0/60.0)) () (fun state dt ->
-        List.iter (State.Transform.fetch (Transform.addRotation deg1)) [sun;planet1;planet2;planet3]
+        List.iter (State.Transform.fetch (Transform.addRotation 1f<deg>)) [sun;planet1;planet2;planet3]
         State ()
     ))
 
@@ -511,6 +507,12 @@ let update (model:Model) fDeltaTime =
 let draw (model:Model) (deltaTime:float32) =
     Raylib.BeginDrawing ()
     Raylib.ClearBackground(Color.Beige)
+    Raylib.BeginMode2D(Camera2D(
+        Vector2(State.camera.Origin.X, State.camera.Origin.Y),
+        State.camera.Position,
+        0f,
+        State.camera.Zoom
+    ))
 
     // Draw Game Elements
     Systems.View.draw ()
@@ -525,9 +527,16 @@ let draw (model:Model) (deltaTime:float32) =
         Systems.Drawing.rectangle 2 Color.Black start stop
 
     // Draw Game UI
+    Raylib.BeginMode2D(Camera2D(
+        Vector2(0f,0f),
+        State.uiCamera.Position,
+        0f,
+        State.uiCamera.Zoom
+    ))
+
     FPS.draw ()
-    Systems.Drawing.mousePosition (FMouse.position ()) (Vector2.create 3f 340f)
-    Systems.Drawing.trackPosition model.Knight (Vector2.create 400f 460f)
+    Systems.Drawing.mousePosition (FMouse.position ()) 20 (Vector2.create 3f   450f)
+    Systems.Drawing.trackPosition     model.Knight     20 (Vector2.create 500f 450f)
 
     Raylib.DrawText(
         text     = String.Format("Visible: {0}", State.View.visible.Count),

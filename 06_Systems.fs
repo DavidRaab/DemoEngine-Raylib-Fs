@@ -28,8 +28,8 @@ module View =
                     let pos   = Vector2.Transform(
                         me.Position,
                         Matrix.CreateScale(scale.X, scale.Y, 0f)
-                        * Matrix.CreateRotationZ(float32 pRot)       // rotate by parent position
-                        * Matrix.CreateTranslation(Vector3(pPos,0f)) // translate by parent position
+                        * Matrix.CreateRotationZ(float32 (Radian.fromDeg pRot)) // rotate by parent position
+                        * Matrix.CreateTranslation(Vector3(pPos,0f))            // translate by parent position
                     )
                     pos,pRot+me.Rotation,scale
                 )
@@ -50,22 +50,11 @@ module View =
                 Raylib.DrawTexturePro(
                     texture  = view.Sprite.Texture,
                     source   = view.Sprite.SrcRect,
-                    dest     = Rectangle(position, scale),
+                    dest     = Rectangle(position, view.Sprite.SrcRect.Width * scale.X * view.Scale.X, view.Sprite.SrcRect.Height * scale.Y * view.Scale.Y),
                     origin   = view.Origin,
                     rotation = float32 (rotation + view.Rotation),
                     tint     = view.Tint
                 )
-                // sb.Draw(
-                //     texture         = ,
-                //     position        = position,
-                //     sourceRectangle = ,
-                //     color           = view.Tint,
-                //     rotation        = float32 (rotation + view.Rotation),
-                //     origin          = view.Origin,
-                //     scale           = view.Scale * scale,
-                //     effects         = view.Effects,
-                //     layerDepth      = 0f
-                // )
 
 // Moves those who should be moved
 module Movement =
@@ -109,19 +98,19 @@ module Animations =
                 )
 
 module Drawing =
-    let mousePosition mousePos (whereToDraw:Vector2) =
-        let world = Camera.screenToWorld mousePos State.camera
+    let mousePosition mousePos fontSize (whereToDraw:Vector2) =
+        let world = Camera.screenToWorld mousePos State.uiCamera
         Raylib.DrawText(
             text     = System.String.Format("Mouse Screen({0},{1}) World({2:0.00},{3:0.00})", mousePos.X, mousePos.Y, world.X, world.Y),
             posX     = int whereToDraw.X,
             posY     = int whereToDraw.Y,
-            fontSize = 20,
+            fontSize = fontSize,
             color    = Color.Black
         )
 
-    let trackPosition (entity:Entity) (whereToDraw:Vector2) =
+    let trackPosition (entity:Entity) fontSize (whereToDraw:Vector2) =
         entity |> State.Transform.fetch (fun t ->
-            let screen = Camera.worldToScreen t.Position State.camera
+            let screen = Camera.worldToScreen t.Position State.uiCamera
             Raylib.DrawText(
                 text =
                     System.String.Format("World({0:0.00},{1:0.00}) Screen({2:0},{3:0})",
@@ -130,7 +119,7 @@ module Drawing =
                     ),
                 posX = int whereToDraw.X,
                 posY = int whereToDraw.Y,
-                fontSize = 20,
+                fontSize = fontSize,
                 color    = Color.Black
             )
         )

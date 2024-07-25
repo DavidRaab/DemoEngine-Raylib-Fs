@@ -13,7 +13,7 @@ type Transform = {
     Parent: Entity voption
     mutable Position: Vector2
     mutable Scale:    Vector2
-    mutable Rotation: float32<rad>
+    mutable Rotation: float32<deg>
 }
 
 [<Struct>]
@@ -63,7 +63,7 @@ type Sprite = {
 /// View component. An Entity needs this component to be shown on screen
 type View = {
     mutable Sprite:   Sprite
-    mutable Rotation: float32<rad>
+    mutable Rotation: float32<deg>
     mutable Tint:     Color
     mutable Scale:    Vector2
     Layer:  int
@@ -95,6 +95,6 @@ type MovementDirection =
 
 type Movement = {
     Direction : MovementDirection voption
-    Rotation  : float32<rad>      voption
+    Rotation  : float32<deg>      voption
 }
 
