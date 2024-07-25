@@ -127,14 +127,12 @@ module Drawing =
     let line (thickness:float32) color (start:Vector2) (stop:Vector2) =
         Raylib.DrawLineEx(start, stop, thickness, color)
 
-    let rectangle (thickness:int) (color:Color) (topLeft:Vector2) (bottomRight:Vector2) =
-        let width  = bottomRight.X - topLeft.X
-        let height = bottomRight.Y - topLeft.Y
-        Raylib.DrawRectangle(
-            int topLeft.X, int topLeft.Y,
-            int width, int height,
-            Raylib.ColorAlpha(color, 0.1f)
+    let rectangle (thickness:int) (color:Color) (start:Vector2) (stop:Vector2) =
+        let rect = Rectangle(
+            min start.X stop.X,
+            min start.Y stop.Y,
+            abs (start.X - stop.X),
+            abs (start.Y - stop.Y)
         )
-        Raylib.DrawRectangleLinesEx(
-            Rectangle(topLeft, width, height), float32 thickness, color
-        )
+        Raylib.DrawRectangleRec(rect, Raylib.ColorAlpha(color, 0.1f))
+        Raylib.DrawRectangleLinesEx(rect, float32 thickness, color)
