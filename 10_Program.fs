@@ -526,14 +526,9 @@ let draw (model:Model) (deltaTime:float32) =
     | EndRectangle (start,stop) ->
         Systems.Drawing.rectangle 2 Color.Black start stop
 
-    // Draw Game UI
-    Raylib.BeginMode2D(Camera2D(
-        Vector2(0f,0f),
-        State.uiCamera.Position,
-        0f,
-        State.uiCamera.Zoom
-    ))
+    Raylib.EndMode2D()
 
+    // Draw Game UI
     FPS.draw ()
     Systems.Drawing.mousePosition (FMouse.position ()) 20 (Vector2.create 3f   450f)
     Systems.Drawing.trackPosition     model.Knight     20 (Vector2.create 500f 450f)
