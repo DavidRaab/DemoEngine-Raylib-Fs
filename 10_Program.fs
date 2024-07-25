@@ -504,98 +504,131 @@ let update (model:Model) fDeltaTime =
 
     model
 
-let draw (model:Model) (deltaTime:float32) =
+// Some begin/end helper functions
+let inline beginTextureMode target ([<InlineIfLambda>] f) =
+    Raylib.BeginTextureMode(target)
+    f ()
+    Raylib.EndTextureMode()
+
+let inline beginMode2D camera ([<InlineIfLambda>] f) =
+    Raylib.BeginMode2D(camera)
+    f ()
+    Raylib.EndMode2D ()
+
+let inline beginDrawing ([<InlineIfLambda>] f) =
     Raylib.BeginDrawing ()
-    Raylib.ClearBackground(Color.Beige)
-    Raylib.BeginMode2D(Camera2D(
+    f ()
+    Raylib.EndDrawing ()
+
+// Those are the variables used for rendering into RenderingTexture
+// They are initialized on program start.
+let mutable target     = Unchecked.defaultof<RenderTexture2D>
+let mutable sourceRect = Unchecked.defaultof<Rectangle>
+let mutable destRect   = Unchecked.defaultof<Rectangle>
+let mutable uiCamera   = Unchecked.defaultof<Camera2D>
+
+let draw (model:Model) (deltaTime:float32) =
+    let camera = Camera2D(
         Vector2(State.camera.Origin.X, State.camera.Origin.Y),
         State.camera.Position,
         0f,
         State.camera.Zoom
-    ))
+    )
+    // let uiCamera = Camera2D(
+    //     Vector2(State.uiCamera.Origin.X, State.uiCamera.Origin.Y),
+    //     State.uiCamera.Position,
+    //     0f,
+    //     State.uiCamera.Zoom
+    // )
 
-    // Draw Game Elements
-    Systems.View.draw ()
+    beginTextureMode target (fun () ->
+        Raylib.ClearBackground(Color.DarkBlue)
+        beginMode2D camera (fun () ->
+            // Draw Game Elements
+            Systems.View.draw ()
 
-    match model.MouseRectangle with
-    | NoRectangle         -> ()
-    | StartRectangle p    -> ()
-    | DrawRectangle (start,stop) ->
-        let stop = Camera.screenToWorld stop State.camera
-        Systems.Drawing.rectangle 2 Color.Black start stop
-    | EndRectangle (start,stop) ->
-        Systems.Drawing.rectangle 2 Color.Black start stop
-
-    Raylib.EndMode2D()
-
-    // Draw Game UI
-    FPS.draw ()
-    Systems.Drawing.mousePosition (FMouse.position ()) 20 (Vector2.create 3f   450f)
-    Systems.Drawing.trackPosition     model.Knight     20 (Vector2.create 500f 450f)
-
-    Raylib.DrawText(
-        text     = String.Format("Visible: {0}", State.View.visible.Count),
-        posX     = 320,
-        posY     = 3,
-        fontSize = 20,
-        color    = Color.Yellow
+            match model.MouseRectangle with
+            | NoRectangle         -> ()
+            | StartRectangle p    -> ()
+            | DrawRectangle (start,stop) ->
+                let stop = Camera.screenToWorld stop State.camera
+                Systems.Drawing.rectangle 2 Color.Black start stop
+            | EndRectangle (start,stop) ->
+                Systems.Drawing.rectangle 2 Color.Black start stop
+        )
     )
 
-    if resetInput then
-        resetInput <- false
-        FKeyboard.nextState ()
-        FGamePad.nextState  ()
-        FMouse.nextState    ()
+    beginDrawing (fun () ->
+        Raylib.ClearBackground(Color.Black)
 
-    Raylib.EndDrawing ()
+        beginMode2D uiCamera (fun () ->
+            Raylib.DrawTexturePro(target.Texture, sourceRect, destRect, Vector2(0f,0f), 0f, Color.White)
+        )
 
-// Initialization of the Game
-let init () =
-    // The virtual width/height is the internal resolution the game renders its image
-    // The window width/height is the actual size of the window
-    let virtualWidth, virtualHeight = 640, 360
-    // let windowWidth,  windowHeight  = 1200, 480
+        FPS.draw ()
+        Systems.Drawing.mousePosition (FMouse.position ()) 20 (Vector2.create 3f   450f)
+        Systems.Drawing.trackPosition     model.Knight     20 (Vector2.create 500f 450f)
 
-    Raylib.InitWindow(1200,480,"Raylib Demo")
+        Raylib.DrawText(
+            text     = String.Format("Visible: {0}", State.View.visible.Count),
+            posX     = 320,
+            posY     = 3,
+            fontSize = 20,
+            color    = Color.Yellow
+        )
 
-    // game.Graphics.SynchronizeWithVerticalRetrace <- false
-    // game.IsFixedTimeStep          <- false
-    // game.TargetElapsedTime        <- sec (1.0 / 60.0)
-    // game.Content.RootDirectory    <- "Content"
-    // game.IsMouseVisible           <- true
-    // game.Window.AllowUserResizing <- true
-    // game.SetResolution windowWidth windowHeight
-
-    Raylib.SetMouseCursor(MouseCursor.Crosshair)
-
-    // game.CalculateViewport ()
-    // let viewport = game.GraphicsDevice.Viewport
-    let viewport = { Width = virtualWidth; Height = virtualHeight }
-    State.camera   <- Camera.create (virtualWidth,virtualHeight) viewport |> Camera.withMinMaxZoom 0.03f 3f
-    State.uiCamera <- Camera.create (virtualWidth,virtualHeight) viewport
-
-    // Event when user resize window
-    // game.Window.ClientSizeChanged |> Event.add (fun args ->
-    //     let g, w = game.Graphics, game.Window
-    //     g.PreferredBackBufferWidth  <- w.ClientBounds.Width
-    //     g.PreferredBackBufferHeight <- w.ClientBounds.Height
-    //     g.ApplyChanges()
-    //     game.CalculateViewport ()
-
-    //     let viewport = game.GraphicsDevice.Viewport
-    //     State.camera   <- Camera.withViewport viewport State.camera
-    //     State.uiCamera <- Camera.withViewport viewport State.uiCamera
-    // )
+        if resetInput then
+            resetInput <- false
+            FKeyboard.nextState ()
+            FGamePad.nextState  ()
+            FMouse.nextState    ()
+    )
 
 // Run MonoGame Application
 [<EntryPoint;System.STAThread>]
 let main argv =
-    init ()
-    let assets = Assets.load ()
-    let mutable model  = initModel assets
+    let screenWidth,  screenHeight  = 1200, 600
+    let virtualWidth, virtualHeight = 640, 360
+    let screenAspect = float32 screenWidth  / float32 screenHeight
+    let targetAspect = float32 virtualWidth / float32 virtualHeight
+
+    // When Aspect ratio is greater 1f, then window is wide-screen
+    let width,height =
+        // 1.5 >= 1,7777
+        if targetAspect <= screenAspect then
+            let h = float32 screenHeight
+            let w = h * targetAspect
+            w,h
+        else
+            let w = float32 screenWidth
+            let h = w / targetAspect
+            w,h
+
+    // camera offset
+    let offset = Vector2(
+        (float32 screenWidth  / 2f) - (width  / 2f),
+        (float32 screenHeight / 2f) - (height / 2f)
+    )
+
+    Raylib.InitWindow(screenWidth,screenHeight,"Raylib Demo")
+    Raylib.SetMouseCursor(MouseCursor.Crosshair)
+
+    let viewport = { Width = virtualWidth; Height = virtualHeight }
+    State.camera   <- Camera.create (virtualWidth,virtualHeight) viewport |> Camera.withMinMaxZoom 0.03f 3f
+    State.uiCamera <- Camera.create (virtualWidth,virtualHeight) viewport
+
+    // Initiialze RenderTexture
+    target     <- Raylib.LoadRenderTexture(virtualWidth, virtualHeight)
+    sourceRect <- Rectangle(0f, 0f, float32 target.Texture.Width, float32 -target.Texture.Height)
+    destRect   <- Rectangle(0f, 0f, width, height)
+    uiCamera   <- Camera2D(offset, Vector2.Zero, 0f, 1f)
+
+    let assets        = Assets.load ()
+    let mutable model = initModel assets
 
     while not (CBool.op_Implicit (Raylib.WindowShouldClose())) do
         let deltaTime = Raylib.GetFrameTime ()
         model      <- update model deltaTime
         draw model deltaTime
+
     1
