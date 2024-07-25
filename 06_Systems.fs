@@ -105,7 +105,7 @@ module Drawing =
             posX     = int whereToDraw.X,
             posY     = int whereToDraw.Y,
             fontSize = fontSize,
-            color    = Color.Black
+            color    = Color.Yellow
         )
 
     let trackPosition (entity:Entity) fontSize (whereToDraw:Vector2) =
@@ -120,7 +120,7 @@ module Drawing =
                 posX = int whereToDraw.X,
                 posY = int whereToDraw.Y,
                 fontSize = fontSize,
-                color    = Color.Black
+                color    = Color.Yellow
             )
         )
 
