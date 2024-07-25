@@ -563,26 +563,26 @@ let draw (model:Model) (deltaTime:float32) =
 
         beginMode2D uiCamera (fun () ->
             Raylib.DrawTexturePro(target.Texture, sourceRect, destRect, Vector2(0f,0f), 0f, Color.White)
+
+            FPS.draw ()
+            Systems.Drawing.mousePosition (FMouse.position ()) 20 (Vector2.create 3f   320f)
+            Systems.Drawing.trackPosition     model.Knight     20 (Vector2.create 500f 320f)
+
+            Raylib.DrawText(
+                text     = String.Format("Visible: {0}", State.View.visible.Count),
+                posX     = 320,
+                posY     = 3,
+                fontSize = 20,
+                color    = Color.Yellow
+            )
         )
-
-        FPS.draw ()
-        Systems.Drawing.mousePosition (FMouse.position ()) 20 (Vector2.create 3f   450f)
-        Systems.Drawing.trackPosition     model.Knight     20 (Vector2.create 500f 450f)
-
-        Raylib.DrawText(
-            text     = String.Format("Visible: {0}", State.View.visible.Count),
-            posX     = 320,
-            posY     = 3,
-            fontSize = 20,
-            color    = Color.Yellow
-        )
-
-        if resetInput then
-            resetInput <- false
-            FKeyboard.nextState ()
-            FGamePad.nextState  ()
-            FMouse.nextState    ()
     )
+
+    if resetInput then
+        resetInput <- false
+        FKeyboard.nextState ()
+        FGamePad.nextState  ()
+        FMouse.nextState    ()
 
 // Run MonoGame Application
 [<EntryPoint;System.STAThread>]
@@ -617,7 +617,7 @@ let main argv =
     State.camera   <- Camera.create (virtualWidth,virtualHeight) viewport |> Camera.withMinMaxZoom 0.03f 3f
     State.uiCamera <- Camera.create (virtualWidth,virtualHeight) viewport
 
-    // Initiialze RenderTexture
+    // initialize RenderTexture
     target     <- Raylib.LoadRenderTexture(virtualWidth, virtualHeight)
     sourceRect <- Rectangle(0f, 0f, float32 target.Texture.Width, float32 -target.Texture.Height)
     destRect   <- Rectangle(0f, 0f, width, height)
