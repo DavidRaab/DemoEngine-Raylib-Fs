@@ -534,39 +534,30 @@ let draw (model:Model) (deltaTime:float32) =
         0f,
         State.camera.Zoom
     )
-    // let uiCamera = Camera2D(
-    //     Vector2(State.uiCamera.Origin.X, State.uiCamera.Origin.Y),
-    //     State.uiCamera.Position,
-    //     0f,
-    //     State.uiCamera.Zoom
-    // )
 
     beginTextureMode target (fun () ->
         Raylib.ClearBackground(Color.DarkBlue)
+
+        // Draw GameObjects
         beginMode2D camera (fun () ->
             // Draw Game Elements
             Systems.View.draw ()
 
             match model.MouseRectangle with
             | NoRectangle         -> ()
-            | StartRectangle p    -> ()
+            | StartRectangle _    -> ()
             | DrawRectangle (start,stop) ->
                 let stop = Camera.screenToWorld stop State.camera
                 Systems.Drawing.rectangle 2 Color.Black start stop
             | EndRectangle (start,stop) ->
                 Systems.Drawing.rectangle 2 Color.Black start stop
         )
-    )
 
-    beginDrawing (fun () ->
-        Raylib.ClearBackground(Color.Black)
-
-        beginMode2D uiCamera (fun () ->
-            Raylib.DrawTexturePro(target.Texture, sourceRect, destRect, Vector2(0f,0f), 0f, Color.White)
-
+        // Draw UI
+        beginMode2D (Camera2D(Vector2.Zero, Vector2.Zero, 0f, 1f)) (fun () ->
             FPS.draw ()
-            Systems.Drawing.mousePosition (FMouse.position ()) 20 (Vector2.create 3f   320f)
-            Systems.Drawing.trackPosition     model.Knight     20 (Vector2.create 500f 320f)
+            Systems.Drawing.mousePosition (FMouse.position ()) 20 (Vector2.create 0f   340f)
+            Systems.Drawing.trackPosition     model.Knight     20 (Vector2.create 500f 340f)
 
             Raylib.DrawText(
                 text     = String.Format("Visible: {0}", State.View.visible.Count),
@@ -575,6 +566,15 @@ let draw (model:Model) (deltaTime:float32) =
                 fontSize = 20,
                 color    = Color.Yellow
             )
+        )
+    )
+
+    beginDrawing (fun () ->
+        Raylib.ClearBackground(Color.Black)
+
+        // Draw RenderTexture
+        beginMode2D uiCamera (fun () ->
+            Raylib.DrawTexturePro(target.Texture, sourceRect, destRect, Vector2(0f,0f), 0f, Color.White)
         )
     )
 
