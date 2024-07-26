@@ -592,15 +592,17 @@ let draw (model:Model) (deltaTime:float32) =
 // Run MonoGame Application
 [<EntryPoint;System.STAThread>]
 let main argv =
+    // The Game uses a virtual Render solution. It renders everything to a
+    // RenderTexture with that Resolution. Then this RenderTexture is scaled to
+    // the window screen. Scaling tries to fit as much of the windows as it is
+    // possible while keeping aspect Ratio of the defined virtual resolution intact.
     let screenWidth,  screenHeight  = 1200, 600
     let virtualWidth, virtualHeight = 640, 360
     let screenAspect = float32 screenWidth  / float32 screenHeight
     let targetAspect = float32 virtualWidth / float32 virtualHeight
 
-
-    // When Aspect ratio is greater 1f, then window is wide-screen
+    // this calculates the real resolution the game uses in the window
     let width,height =
-        // 1.5 >= 1,7777
         if targetAspect <= screenAspect then
             let h = float32 screenHeight
             let w = h * targetAspect
@@ -609,31 +611,34 @@ let main argv =
             let w = float32 screenWidth
             let h = w / targetAspect
             w,h
-    printfn "Game Screen Pixels %3.0f %3.0f" width height
 
     Raylib.InitWindow(screenWidth,screenHeight,"Raylib Demo")
     Raylib.SetMouseCursor(MouseCursor.Crosshair)
-    let mx, my = (float32 virtualWidth / width), (float32 virtualHeight / height)
-    printfn "MX %f MY %f" mx my
-    Raylib.SetMouseScale(mx,my)
-
-    // let viewport = { Width = virtualWidth; Height = virtualHeight }
-    // State.camera   <- Camera.create (virtualWidth,virtualHeight) viewport |> Camera.withMinMaxZoom 0.03f 3f
-    // State.uiCamera <- Camera.create (virtualWidth,virtualHeight) viewport
+    // We need to set a Mouse Scale so we don't get the screen position, we instead get
+    // a position that is conform with our virtual Resolution. When a virtual resolution
+    // of 640 x 360 is defined. Then GetMousePosition() will also return 640 x 360
+    // when mouse cursor is in bottomRight position independent of the real window size.
+    Raylib.SetMouseScale((float32 virtualWidth / width), (float32 virtualHeight / height))
 
     // initialize RenderTexture
     target         <- Raylib.LoadRenderTexture(virtualWidth, virtualHeight)
     sourceRect     <- Rectangle(0f, 0f, float32 target.Texture.Width, float32 -target.Texture.Height)
     destRect       <- Rectangle(0f, 0f, width, height)
-    State.camera   <- Camera2D(Vector2.Zero, Vector2.Zero, 0f, 1f)
-    State.uiCamera <- Camera2D(Vector2.Zero, Vector2.Zero, 0f, 1f)
 
+    // Initialize Cameras
+    State.camera   <- Camera2D(Vector2.Zero, Vector2.Zero, 0f, 1f) // World Camera
+    State.uiCamera <- Camera2D(Vector2.Zero, Vector2.Zero, 0f, 1f) // Camera for GUI elements
+
+    // Load Game Assets and initialize first Model
     let assets        = Assets.load ()
     let mutable model = initModel assets
 
+    // Game Loop
     while not (CBool.op_Implicit (Raylib.WindowShouldClose())) do
         let deltaTime = Raylib.GetFrameTime ()
         model      <- update model deltaTime
         draw model deltaTime
+
+    // TODO: Proper Unloading of resources
 
     1
