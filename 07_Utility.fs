@@ -338,7 +338,7 @@ module FInput =
 type FPS = {
     mutable Updates:     int
     mutable Draws:       int
-    mutable ElapsedTime: TimeSpan
+    mutable ElapsedTime: float
     mutable UpdateFPS:   float
     mutable DrawFPS:     float
 }
@@ -350,22 +350,23 @@ module FPS =
     let state = create {
         Updates     = 0
         Draws       = 0
-        ElapsedTime = TimeSpan.Zero
+        ElapsedTime = 0
         UpdateFPS   = 0
         DrawFPS     = 0
     }
 
     // Called on each update
-    let update (deltaTime:TimeSpan) =
+    let update (deltaTime:float32) =
+        let deltaTime = float deltaTime
         state.Updates     <- state.Updates + 1
         state.ElapsedTime <- state.ElapsedTime + deltaTime
 
-        if state.ElapsedTime >= TimeSpan.oneSecond then
-            state.UpdateFPS   <- float state.Updates / state.ElapsedTime.TotalSeconds
-            state.DrawFPS     <- float state.Draws   / state.ElapsedTime.TotalSeconds
+        if state.ElapsedTime >= 1.0 then
+            state.UpdateFPS   <- float state.Updates / state.ElapsedTime
+            state.DrawFPS     <- float state.Draws   / state.ElapsedTime
             state.Updates     <- 0
             state.Draws       <- 0
-            state.ElapsedTime <- TimeSpan.Zero
+            state.ElapsedTime <- state.ElapsedTime - 1.0
 
     let draw () =
         state.Draws <- state.Draws + 1

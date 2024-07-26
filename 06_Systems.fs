@@ -58,20 +58,19 @@ module View =
 
 // Moves those who should be moved
 module Movement =
-    let update (deltaTime:TimeSpan) =
-        let fdt = float32 deltaTime.TotalSeconds
+    let update (deltaTime:float32) =
         for KeyValue(entity,mov) in State.Movement.Data do
             entity |> State.Transform.fetch (fun t ->
                 match mov.Direction with
                 | ValueNone                        -> ()
-                | ValueSome (Relative dir)         -> Transform.addPosition (dir * fdt) t
+                | ValueSome (Relative dir)         -> Transform.addPosition (dir * deltaTime) t
                 | ValueSome (Absolute (pos,speed)) ->
                     let dir = (Vector2.Normalize (pos - t.Position)) * speed
-                    Transform.addPosition (dir * fdt) t
+                    Transform.addPosition (dir * deltaTime) t
 
                 match mov.Rotation with
                 | ValueNone     -> ()
-                | ValueSome rot -> Transform.addRotation (rot * fdt) t
+                | ValueSome rot -> Transform.addRotation (rot * deltaTime) t
             )
 
 module Timer =
@@ -80,14 +79,16 @@ module Timer =
     let addTimer timer =
         state.Add (Timed.get timer)
 
-    let update (deltaTime:TimeSpan) =
+    let update (deltaTime:float32) =
+        let deltaTime = TimeSpan.FromSeconds(float deltaTime)
         for idx=0 to state.Count-1 do
             match Timed.run deltaTime (state.[idx]) with
             | Pending    -> ()
             | Finished _ -> state.RemoveAt(idx)
 
 module Animations =
-    let update (deltaTime: TimeSpan) =
+    let update (deltaTime:float32) =
+        let deltaTime = TimeSpan.FromSeconds(float deltaTime)
         for KeyValue(entity,anim) in State.Animation.Data do
             anim.ElapsedTime <- anim.ElapsedTime + deltaTime
             if anim.ElapsedTime > anim.CurrentSheet.FrameDuration then

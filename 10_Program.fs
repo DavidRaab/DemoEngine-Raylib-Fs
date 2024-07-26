@@ -62,7 +62,7 @@ let boxes assets =
                     // must be computed with a matrix calculated of the parent.
                     |> Transform.withParent (ValueSome boxesOrigin)
                 )
-                box.addView      (Sheets.createView Layer.BG1 Center assets.Box)
+                box.addView      (Sheets.createView Layer.BG2 Center assets.Box)
                 box.addAnimation (Animation.create assets.Box)
                 box.addMovement {
                     Direction = ValueNone //ValueSome (Relative (Vector2.Right * 25f))
@@ -329,9 +329,8 @@ let inputMapping = {
 
 // A Fixed Update implementation that tuns at the specified fixedUpdateTiming
 let mutable resetInput = false
-let fixedUpdateTiming = sec (1.0 / 60.0)
-let fixedUpdate model (deltaTime:TimeSpan) =
-    let fDeltaTime = float32 deltaTime.TotalSeconds
+let fixedUpdateTiming = 1.0f / 60.0f
+let fixedUpdate model (deltaTime:float32) =
     Systems.Timer.update      deltaTime
     Systems.Movement.update   deltaTime
     Systems.Animations.update deltaTime
@@ -456,21 +455,18 @@ let fixedUpdate model (deltaTime:TimeSpan) =
     // The next model
     model
 
-// Type Alias for my game
-// type MyGame = MonoGame<Assets,Model>
-
-let mutable fixedUpdateElapsedTime = TimeSpan.Zero
-let update (model:Model) fDeltaTime =
-    let deltaTime  = TimeSpan.FromSeconds(float fDeltaTime)
+let mutable fixedUpdateElapsedTime = 0f
+let update (model:Model) (deltaTime:float32) =
     FPS.update deltaTime
 
-    let inline isDown key : bool = CBool.op_Implicit(Raylib.IsKeyDown(key))
-    let inline addPos pos        = State.camera.Target <- (State.camera.Target + (pos * fDeltaTime))
+    let inline isDown key : bool    = CBool.op_Implicit(Raylib.IsKeyDown(key))
+    let inline addPos (pos:Vector2) = State.camera.Target <- (State.camera.Target + (pos * deltaTime))
 
-    if isDown KeyboardKey.W then addPos (Vector2.Up    * 100f)
-    if isDown KeyboardKey.A then addPos (Vector2.Left  * 100f)
-    if isDown KeyboardKey.S then addPos (Vector2.Down  * 100f)
-    if isDown KeyboardKey.D then addPos (Vector2.Right * 100f)
+    if isDown KeyboardKey.W    then addPos (Vector2.Up    * 100f)
+    if isDown KeyboardKey.A    then addPos (Vector2.Left  * 100f)
+    if isDown KeyboardKey.S    then addPos (Vector2.Down  * 100f)
+    if isDown KeyboardKey.D    then addPos (Vector2.Right * 100f)
+    if isDown KeyboardKey.Home then State.camera.Target <- Vector2(0f,0f)
 
     // Get current keyboard/GamePad state and add it to our KeyBoard/GamePad module
     // This way we ensure that fixedUpdate has correct keyboard/GamePad state between
@@ -616,17 +612,18 @@ let main argv =
     Raylib.SetMouseCursor(MouseCursor.Crosshair)
     // We need to set a Mouse Scale so we don't get the screen position, we instead get
     // a position that is conform with our virtual Resolution. When a virtual resolution
-    // of 640 x 360 is defined. Then GetMousePosition() will also return 640 x 360
+    // of 640 x 360 is defined then GetMousePosition() will also return 640 x 360
     // when mouse cursor is in bottomRight position independent of the real window size.
     Raylib.SetMouseScale((float32 virtualWidth / width), (float32 virtualHeight / height))
 
     // initialize RenderTexture
-    target         <- Raylib.LoadRenderTexture(virtualWidth, virtualHeight)
-    sourceRect     <- Rectangle(0f, 0f, float32 target.Texture.Width, float32 -target.Texture.Height)
-    destRect       <- Rectangle(0f, 0f, width, height)
+    target     <- Raylib.LoadRenderTexture(virtualWidth, virtualHeight)
+    sourceRect <- Rectangle(0f, 0f, float32 target.Texture.Width, float32 -target.Texture.Height)
+    destRect   <- Rectangle(0f, 0f, width, height)
 
     // Initialize Cameras
-    State.camera   <- Camera2D(Vector2.Zero, Vector2.Zero, 0f, 1f) // World Camera
+    let offset = Vector2(float32 virtualWidth / 2f, float32 virtualHeight /2f)
+    State.camera   <- Camera2D(offset,       Vector2.Zero, 0f, 1f) // World Camera
     State.uiCamera <- Camera2D(Vector2.Zero, Vector2.Zero, 0f, 1f) // Camera for GUI elements
 
     // Load Game Assets and initialize first Model
@@ -636,9 +633,10 @@ let main argv =
     // Game Loop
     while not (CBool.op_Implicit (Raylib.WindowShouldClose())) do
         let deltaTime = Raylib.GetFrameTime ()
-        model      <- update model deltaTime
+        model <- update model deltaTime
         draw model deltaTime
 
     // TODO: Proper Unloading of resources
+    Raylib.UnloadRenderTexture(target)
 
     1
