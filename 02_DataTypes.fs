@@ -29,13 +29,16 @@ type Origin =
     | BottomRight
     | Position of float32 * float32
 
-type ViewLayer =
-    | BG2
-    | BG1
-    | FG2
-    | FG1
-    | UI2
-    | UI1
+/// The Layer GameObjects are Drawn to. Divided into Background and Foreground.
+/// The number indicates a Depth. Example: So BG3 is further away than BG1.
+/// This means elements in BG1 are always drawn on top of BG3.
+type Layer =
+    | BG3 = 1uy
+    | BG2 = 2uy
+    | BG1 = 3uy
+    | FG3 = 4uy
+    | FG2 = 5uy
+    | FG1 = 6uy
 
 type Viewport = {
     Width:  int
@@ -54,7 +57,7 @@ type View = {
     mutable Rotation: float32<deg>
     mutable Tint:     Color
     mutable Scale:    Vector2
-    Layer:  int
+    Layer:  byte
     Origin: Vector2
 }
 

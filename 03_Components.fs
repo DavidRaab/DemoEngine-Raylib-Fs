@@ -171,29 +171,17 @@ module Sprite =
         sprites
 
 module View =
-    // Turns a Layer into a number. When Drawing the sprites all sprites
-    // are sorted by this number. This way we can emulate layers. On the same
-    // layer no drawing order can be preserved.
-    let layerToFloat layer =
-        match layer with
-            | BG2 -> 1
-            | BG1 -> 2
-            | FG2 -> 3
-            | FG1 -> 4
-            | UI2 -> 5
-            | UI1 -> 6
-
     // Constructors
     let inline create (v:View) : View = v
 
     /// Generates a View
-    let fromSprite origin layer (sprite:Sprite) : View = {
+    let fromSprite origin (layer:Layer) (sprite:Sprite) : View = {
         Sprite    = sprite
         Tint      = Color.White
         Rotation  = 0.0f<deg>
         Origin    = Origin.toPosition (float32 sprite.SrcRect.Width) (float32 sprite.SrcRect.Height) origin
         Scale     = Vector2.One
-        Layer     = layerToFloat layer
+        Layer     = byte layer
     }
 
     let fromSpriteTop    = fromSprite Top
@@ -203,7 +191,7 @@ module View =
     let fromSpriteCenter = fromSprite Center
 
     /// Generates a View from a Sheet by using the selected Sprite
-    let fromSheet layer index (sheet:Sheet) : View = {
+    let fromSheet (layer:Layer) index (sheet:Sheet) : View = {
         Sprite =
             Array.tryItem index sheet.Sprites |> Option.defaultWith (fun _ ->
                 eprintfn "Index [%d] out of Range. Max index is [%d] at\n%s"
@@ -216,7 +204,7 @@ module View =
         Rotation  = 0.0f<deg>
         Origin    = Vector2.Zero
         Scale     = Vector2.One
-        Layer     = layerToFloat layer
+        Layer     = byte layer
     }
 
     // Immutable Properties
@@ -281,14 +269,14 @@ module Sheets =
         Map.find name sheets.Sheets
 
     /// Creates a View from the currently set sprite sheet
-    let createView layer origin (sheets:Sheets) : View =
+    let createView (layer:Layer) origin (sheets:Sheets) : View =
         let sprite = sheets.Sheets.[sheets.Default].Sprites.[0]
         View.create {
             Sprite   = sprite
             Rotation = 0f<deg>
             Tint     = Color.White
             Scale    = Vector2.One
-            Layer    = View.layerToFloat layer
+            Layer    = byte layer
             Origin   = Origin.toPosition (float32 sprite.SrcRect.Width) (float32 sprite.SrcRect.Height) origin
         }
 
