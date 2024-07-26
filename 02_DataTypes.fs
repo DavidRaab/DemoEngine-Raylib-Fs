@@ -42,18 +42,6 @@ type Viewport = {
     Height: int
 }
 
-type Camera = {
-    mutable Position: Vector2
-    mutable Zoom:     float32
-    mutable Matrix:   Matrix4x4 option // This field is used for caching the matrix
-    VirtualWidth:     int
-    VirtualHeight:    int
-    Viewport:         Viewport
-    Origin:           Vector3
-    MinZoom:          float32
-    MaxZoom:          float32
-}
-
 /// A sprite is a selection from a Texture2D
 type Sprite = {
     Texture: Texture2D

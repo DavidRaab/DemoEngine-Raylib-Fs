@@ -283,6 +283,7 @@ type Action =
 let mutable knightState = IsIdle
 
 // Input mapping to User Actions
+(*
 let inputMapping = {
     Keyboard = [
         Key.Space, IsPressed, Attack
@@ -324,6 +325,7 @@ let inputMapping = {
         Position              = None
     }
 }
+*)
 
 // A Fixed Update implementation that tuns at the specified fixedUpdateTiming
 let mutable resetInput = false
@@ -334,6 +336,7 @@ let fixedUpdate model (deltaTime:TimeSpan) =
     Systems.Movement.update   deltaTime
     Systems.Animations.update deltaTime
 
+    (*
     // Get all Input of user and maps them into actions
     let actions = FInput.mapInput State.camera inputMapping
 
@@ -442,6 +445,7 @@ let fixedUpdate model (deltaTime:TimeSpan) =
         | ScrollZoom (IsSmaller 0f x) -> Camera.subtractZoom   0.1f State.camera
         | Camera v                    -> Camera.add           (v * 400f * ((float32 State.camera.MaxZoom + 1f) - float32 State.camera.Zoom) * fDeltaTime) State.camera
         | _                           -> ()
+    *)
 
     // Whenever one fixedUpdate runs the Input states should be resetted
     // But the current input information should also be avaiable in draw
@@ -458,22 +462,29 @@ let fixedUpdate model (deltaTime:TimeSpan) =
 let mutable fixedUpdateElapsedTime = TimeSpan.Zero
 let update (model:Model) fDeltaTime =
     let deltaTime  = TimeSpan.FromSeconds(float fDeltaTime)
+    FPS.update deltaTime
+
+    let inline isDown key : bool = CBool.op_Implicit(Raylib.IsKeyDown(key))
+    let inline addPos pos        = State.camera.Target <- (State.camera.Target + (pos * fDeltaTime))
+
+    if isDown KeyboardKey.W then addPos (Vector2.Up    * 100f)
+    if isDown KeyboardKey.A then addPos (Vector2.Left  * 100f)
+    if isDown KeyboardKey.S then addPos (Vector2.Down  * 100f)
+    if isDown KeyboardKey.D then addPos (Vector2.Right * 100f)
 
     // Get current keyboard/GamePad state and add it to our KeyBoard/GamePad module
     // This way we ensure that fixedUpdate has correct keyboard/GamePad state between
     // fixedUpdate calls and not just from the current update.
     // let keyboard = Input.Keyboard.GetState ()
-    FKeyboard.addKeys ()
+    // FKeyboard.addKeys ()
     // let gamepad  = Input.GamePad.GetState(0)
-    FGamePad.addState ()
+    // FGamePad.addState ()
     // let mouse    = Input.Mouse.GetState ()
-    FMouse.addState (State.camera)
+    // FMouse.addState (State.camera)
 
     // Close Game
     // if keyboard.IsKeyDown Key.Escape then
     //     game.Exit ()
-
-    FPS.update deltaTime
 
     // FixedUpdate Handling
     fixedUpdateElapsedTime <- fixedUpdateElapsedTime + deltaTime
@@ -525,21 +536,13 @@ let inline beginDrawing ([<InlineIfLambda>] f) =
 let mutable target     = Unchecked.defaultof<RenderTexture2D>
 let mutable sourceRect = Unchecked.defaultof<Rectangle>
 let mutable destRect   = Unchecked.defaultof<Rectangle>
-let mutable uiCamera   = Unchecked.defaultof<Camera2D>
 
 let draw (model:Model) (deltaTime:float32) =
-    let camera = Camera2D(
-        Vector2(State.camera.Origin.X, State.camera.Origin.Y),
-        State.camera.Position,
-        0f,
-        State.camera.Zoom
-    )
-
     beginTextureMode target (fun () ->
         Raylib.ClearBackground(Color.DarkBlue)
 
         // Draw GameObjects
-        beginMode2D camera (fun () ->
+        beginMode2D State.camera (fun () ->
             // Draw Game Elements
             Systems.View.draw ()
 
@@ -547,17 +550,19 @@ let draw (model:Model) (deltaTime:float32) =
             | NoRectangle         -> ()
             | StartRectangle _    -> ()
             | DrawRectangle (start,stop) ->
-                let stop = Camera.screenToWorld stop State.camera
+                // let stop = Camera.screenToWorld stop State.camera
+                let stop = Raylib.GetScreenToWorld2D(stop,State.uiCamera)
                 Systems.Drawing.rectangle 2 Color.Black start stop
             | EndRectangle (start,stop) ->
                 Systems.Drawing.rectangle 2 Color.Black start stop
         )
 
         // Draw UI
-        beginMode2D (Camera2D(Vector2.Zero, Vector2.Zero, 0f, 1f)) (fun () ->
+        beginMode2D State.uiCamera (fun () ->
             FPS.draw ()
-            Systems.Drawing.mousePosition (FMouse.position ()) 20 (Vector2.create 0f   340f)
-            Systems.Drawing.trackPosition     model.Knight     20 (Vector2.create 500f 340f)
+            let mousePos = Raylib.GetMousePosition()
+            Systems.Drawing.mousePosition    (mousePos) 20 (Vector2.create 0f 320f)
+            Systems.Drawing.trackPosition  model.Knight 20 (Vector2.create 0f 340f)
 
             Raylib.DrawText(
                 text     = String.Format("Visible: {0}", State.View.visible.Count),
@@ -573,16 +578,16 @@ let draw (model:Model) (deltaTime:float32) =
         Raylib.ClearBackground(Color.Black)
 
         // Draw RenderTexture
-        beginMode2D uiCamera (fun () ->
+        beginMode2D State.uiCamera (fun () ->
             Raylib.DrawTexturePro(target.Texture, sourceRect, destRect, Vector2(0f,0f), 0f, Color.White)
         )
     )
 
-    if resetInput then
-        resetInput <- false
-        FKeyboard.nextState ()
-        FGamePad.nextState  ()
-        FMouse.nextState    ()
+    // if resetInput then
+    //     resetInput <- false
+    //     FKeyboard.nextState ()
+    //     FGamePad.nextState  ()
+    //     FMouse.nextState    ()
 
 // Run MonoGame Application
 [<EntryPoint;System.STAThread>]
@@ -591,6 +596,7 @@ let main argv =
     let virtualWidth, virtualHeight = 640, 360
     let screenAspect = float32 screenWidth  / float32 screenHeight
     let targetAspect = float32 virtualWidth / float32 virtualHeight
+
 
     // When Aspect ratio is greater 1f, then window is wide-screen
     let width,height =
@@ -603,25 +609,24 @@ let main argv =
             let w = float32 screenWidth
             let h = w / targetAspect
             w,h
-
-    // camera offset
-    let offset = Vector2(
-        (float32 screenWidth  / 2f) - (width  / 2f),
-        (float32 screenHeight / 2f) - (height / 2f)
-    )
+    printfn "Game Screen Pixels %3.0f %3.0f" width height
 
     Raylib.InitWindow(screenWidth,screenHeight,"Raylib Demo")
     Raylib.SetMouseCursor(MouseCursor.Crosshair)
+    let mx, my = (float32 virtualWidth / width), (float32 virtualHeight / height)
+    printfn "MX %f MY %f" mx my
+    Raylib.SetMouseScale(mx,my)
 
-    let viewport = { Width = virtualWidth; Height = virtualHeight }
-    State.camera   <- Camera.create (virtualWidth,virtualHeight) viewport |> Camera.withMinMaxZoom 0.03f 3f
-    State.uiCamera <- Camera.create (virtualWidth,virtualHeight) viewport
+    // let viewport = { Width = virtualWidth; Height = virtualHeight }
+    // State.camera   <- Camera.create (virtualWidth,virtualHeight) viewport |> Camera.withMinMaxZoom 0.03f 3f
+    // State.uiCamera <- Camera.create (virtualWidth,virtualHeight) viewport
 
     // initialize RenderTexture
-    target     <- Raylib.LoadRenderTexture(virtualWidth, virtualHeight)
-    sourceRect <- Rectangle(0f, 0f, float32 target.Texture.Width, float32 -target.Texture.Height)
-    destRect   <- Rectangle(0f, 0f, width, height)
-    uiCamera   <- Camera2D(offset, Vector2.Zero, 0f, 1f)
+    target         <- Raylib.LoadRenderTexture(virtualWidth, virtualHeight)
+    sourceRect     <- Rectangle(0f, 0f, float32 target.Texture.Width, float32 -target.Texture.Height)
+    destRect       <- Rectangle(0f, 0f, width, height)
+    State.camera   <- Camera2D(Vector2.Zero, Vector2.Zero, 0f, 1f)
+    State.uiCamera <- Camera2D(Vector2.Zero, Vector2.Zero, 0f, 1f)
 
     let assets        = Assets.load ()
     let mutable model = initModel assets

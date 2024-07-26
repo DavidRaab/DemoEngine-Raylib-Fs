@@ -99,9 +99,9 @@ module Animations =
 
 module Drawing =
     let mousePosition mousePos fontSize (whereToDraw:Vector2) =
-        let world = Camera.screenToWorld mousePos State.uiCamera
+        let world = Raylib.GetScreenToWorld2D(mousePos, State.camera)
         Raylib.DrawText(
-            text     = System.String.Format("Mouse Screen({0},{1}) World({2:0.00},{3:0.00})", mousePos.X, mousePos.Y, world.X, world.Y),
+            text     = System.String.Format("Mouse Screen({0:0.00},{1:0.00}) World({2:0.00},{3:0.00})", mousePos.X, mousePos.Y, world.X, world.Y),
             posX     = int whereToDraw.X,
             posY     = int whereToDraw.Y,
             fontSize = fontSize,
@@ -110,10 +110,10 @@ module Drawing =
 
     let trackPosition (entity:Entity) fontSize (whereToDraw:Vector2) =
         entity |> State.Transform.fetch (fun t ->
-            let screen = Camera.worldToScreen t.Position State.uiCamera
+            let screen = Raylib.GetWorldToScreen2D(t.Position, State.camera)
             Raylib.DrawText(
                 text =
-                    System.String.Format("World({0:0.00},{1:0.00}) Screen({2:0},{3:0})",
+                    System.String.Format("World({0:0.00},{1:0.00}) Screen({2:0.00},{3:0.00})",
                         t.Position.X, t.Position.Y,
                         screen.X, screen.Y
                     ),

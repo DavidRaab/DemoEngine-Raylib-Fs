@@ -9,6 +9,7 @@ type String   = System.String
 type TimeSpan = System.TimeSpan
 type Key      = KeyboardKey
 
+(*
 type FKeyboardState() =
     let state = System.Collections.BitArray(512)
     member this.SetKey (key:Key) =
@@ -332,6 +333,7 @@ module FInput =
         )
 
         List.ofSeq actions
+*)
 
 type FPS = {
     mutable Updates:     int

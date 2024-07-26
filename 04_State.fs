@@ -1,4 +1,5 @@
 namespace MyGame.State
+open Raylib_cs
 open MyGame
 open MyGame.DataTypes
 
@@ -58,8 +59,8 @@ type State<'Component>() =
 
 
 module State =
-    let mutable camera   = Unchecked.defaultof<Camera>
-    let mutable uiCamera = Unchecked.defaultof<Camera>
+    let mutable camera   = Unchecked.defaultof<Camera2D>
+    let mutable uiCamera = Unchecked.defaultof<Camera2D>
     let Transform        = State<Transform>()
     let Movement         = State<Movement>()
     let Animation        = State<Animation>()
