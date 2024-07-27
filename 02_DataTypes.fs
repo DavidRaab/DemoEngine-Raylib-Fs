@@ -33,12 +33,12 @@ type Origin =
 /// The number indicates a Depth. Example: So BG3 is further away than BG1.
 /// This means elements in BG1 are always drawn on top of BG3.
 type Layer =
-    | BG3
-    | BG2
-    | BG1
-    | FG3
-    | FG2
-    | FG1
+    | BG3 = 0uy
+    | BG2 = 1uy
+    | BG1 = 2uy
+    | FG3 = 3uy
+    | FG2 = 4uy
+    | FG1 = 5uy
 
 type Viewport = {
     Width:  int

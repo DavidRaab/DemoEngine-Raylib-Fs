@@ -14,6 +14,7 @@ and Sprites = {
     Missing:  Sprite
     Arrow:    Sprite
     WhiteBox: Sprite
+    Enemy:    Sprite
 }
 
 module Assets =
@@ -32,6 +33,7 @@ module Assets =
                 Missing  = Sprite.fromTexture (texture  1  1 Color.Pink)
                 WhiteBox = Sprite.fromTexture (texture 10 10 Color.White)
                 Arrow    = Sprite.fromTexture (load "Content/arrow.png")
+                Enemy    = Sprite.fromTexture (load "Content/enemy.png")
             }
             Knight = Sheets.create {
                 Default = "Idle"

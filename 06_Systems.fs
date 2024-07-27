@@ -49,37 +49,37 @@ module View =
                 )
 
     let draw () =
-        State.View |> Dic2.iter (true,BG3) (fun entity v ->
+        State.View |> Dic2.iter (true,Layer.BG3) (fun entity v ->
             match Dictionary.get entity State.Transform with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
-        State.View |> Dic2.iter (true,BG2) (fun entity v ->
+        State.View |> Dic2.iter (true,Layer.BG2) (fun entity v ->
             match Dictionary.get entity State.Transform with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
-        State.View |> Dic2.iter (true,BG1) (fun entity v ->
+        State.View |> Dic2.iter (true,Layer.BG1) (fun entity v ->
             match Dictionary.get entity State.Transform with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
-        State.View |> Dic2.iter (true,FG3) (fun entity v ->
+        State.View |> Dic2.iter (true,Layer.FG3) (fun entity v ->
             match Dictionary.get entity State.Transform with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
-        State.View |> Dic2.iter (true,FG2) (fun entity v ->
+        State.View |> Dic2.iter (true,Layer.FG2) (fun entity v ->
             match Dictionary.get entity State.Transform with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
-        State.View |> Dic2.iter (true,FG1) (fun entity v ->
+        State.View |> Dic2.iter (true,Layer.FG1) (fun entity v ->
             match Dictionary.get entity State.Transform with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()

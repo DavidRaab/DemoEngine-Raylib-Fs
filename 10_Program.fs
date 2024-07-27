@@ -29,7 +29,7 @@ type Model = {
 let boxes assets =
     // black box that rotates
     let boxesOrigin = Entity.init (fun e ->
-        e.addView      BG1 (View.fromSpriteCenter assets.Sprites.WhiteBox |> View.setTint Color.Black)
+        e.addView      Layer.BG1 (View.fromSpriteCenter assets.Sprites.WhiteBox |> View.setTint Color.Black)
         e.addTransform (Transform.fromPosition 0f 0f)
         e.addMovement {
             Direction = ValueNone // ValueSome (Relative (Vector2.Right * 50f))
@@ -62,7 +62,7 @@ let boxes assets =
                     // must be computed with a matrix calculated of the parent.
                     |> Transform.withParent (ValueSome boxesOrigin)
                 )
-                box.addView      BG2 (Sheets.createView Center assets.Box)
+                box.addView      Layer.BG2 (Sheets.createView Center assets.Box)
                 box.addAnimation (Animation.create assets.Box)
                 box.addMovement {
                     Direction = ValueNone //ValueSome (Relative (Vector2.Right * 25f))
@@ -129,7 +129,7 @@ let initModel assets =
             Transform.fromPosition 100f 100f
             // |> Transform.setRotationVector (Vector2.Right)
         )
-        e.addView FG1 (View.fromSpriteCenter assets.Sprites.Arrow)
+        e.addView Layer.FG1 (View.fromSpriteCenter assets.Sprites.Arrow)
         Systems.Timer.addTimer (Timer.every (sec 0.1) () (fun _ dt ->
             match Dictionary.get e State.Transform with
             | ValueSome t -> Transform.addRotation 10f<deg> t
@@ -140,7 +140,7 @@ let initModel assets =
 
     let knight = Entity.init (fun e ->
         e.addTransform (Transform.fromPosition 0f 0f)
-        e.addView FG1 (
+        e.addView Layer.FG1 (
             Sheets.createView Top assets.Knight
             |> View.setScale (Vector2.create 2f 2f)
         )
@@ -153,7 +153,7 @@ let initModel assets =
             Transform.fromPosition 0f 80f
             |> Transform.withParent (ValueSome knight)
         )
-        e.addView FG1 (
+        e.addView Layer.FG1 (
             View.fromSpriteCenter assets.Sprites.WhiteBox
             |> View.setTint Color.Blue
         )
@@ -161,7 +161,7 @@ let initModel assets =
 
     let sun = Entity.init (fun e ->
         e.addTransform (Transform.fromPosition 200f 200f)
-        e.addView FG1 (
+        e.addView Layer.FG1 (
             View.fromSpriteCenter assets.Sprites.WhiteBox
             |> View.setTint Color.Yellow
         )
@@ -189,7 +189,7 @@ let initModel assets =
             Transform.fromPosition 0f -100f
             |> Transform.withParent (ValueSome sun)
         )
-        e.addView FG1 (
+        e.addView Layer.FG1 (
             View.fromSpriteCenter assets.Sprites.WhiteBox
             |> View.setTint Color.DarkBlue
         )
@@ -200,7 +200,7 @@ let initModel assets =
             Transform.fromPosition 0f -50f
             |> Transform.withParent (ValueSome planet1)
         )
-        e.addView FG1 (
+        e.addView Layer.FG1 (
             View.fromSpriteCenter assets.Sprites.WhiteBox
             |> View.setTint Color.DarkPurple
         )
@@ -211,7 +211,7 @@ let initModel assets =
             Transform.fromPosition 0f -20f
             |> Transform.withParent (ValueSome planet2)
         )
-        e.addView FG1 (
+        e.addView Layer.FG1 (
             View.fromSpriteCenter assets.Sprites.WhiteBox
             |> View.setTint Color.Brown
         )
