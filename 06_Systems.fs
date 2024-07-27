@@ -195,11 +195,6 @@ module Drawing =
         Raylib.DrawLineEx(start, stop, thickness, color)
 
     let rectangle (thickness:int) (color:Color) (start:Vector2) (stop:Vector2) =
-        let rect = Rectangle(
-            min start.X stop.X,
-            min start.Y stop.Y,
-            abs (start.X - stop.X),
-            abs (start.Y - stop.Y)
-        )
+        let rect = Rectangle.fromVectors start stop
         Raylib.DrawRectangleRec(rect, Raylib.ColorAlpha(color, 0.1f))
         Raylib.DrawRectangleLinesEx(rect, float32 thickness, color)
