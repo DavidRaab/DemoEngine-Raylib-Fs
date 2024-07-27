@@ -9,7 +9,7 @@ open MyGame.Utility
 open MyGame.Timer
 open MyGame.Assets
 
-// Only load the Keys -- I have my own Input Implementation on top of MonoGame
+// Shorter Alias
 type Key    = Raylib_cs.KeyboardKey
 type Button = FGamePadButton
 
@@ -84,7 +84,11 @@ let boxes assets =
     // instead of updating all i just update some boxes every call. So work is split
     // across several frames.
     // Another option would be to put the work on another Thread that don't block
-    // the main Thread.
+    // the main Thread. But some Stutter may also be caused by GC. As Movement is
+    // an immutable data-structure at the moment and updating all means it creates
+    // 40,000 objects immediately when it runs. But anyway with changed implementation
+    // i couldn't notice any stutter. But also could anyway change it to a mutable
+    // structure if needed.
     let rng = System.Random ()
     Systems.Timer.addTimer (Timer.every (sec 0.1) 0 (fun idx dt ->
         // changes direction and rotation of 200 boxes every call to a new random direction/rotation
