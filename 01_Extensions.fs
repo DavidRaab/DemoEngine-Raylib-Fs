@@ -25,17 +25,24 @@ module Extensions =
 
     // Common dispatch for Numbers. Do something if number
     // is greater, smaller or equal zero
-    let inline cmp fGreater fSmaller fEqual x =
+
+    /// Checks if number is greater, smaller or equal to zero and
+    /// executes corresponding function.
+    let inline cmp fGreater fSmaller fEqual (x:float) =
         if   x > 0.0 then fGreater x
         elif x < 0.0 then fSmaller x
         else fEqual x
 
-    let inline cmpF fGreater fSmaller fEqual x =
+    /// Checks if number is greater, smaller or equal to zero and
+    /// executes corresponding function.
+    let inline cmpF fGreater fSmaller fEqual (x:float32) =
         if   x > 0.0f then fGreater x
         elif x < 0.0f then fSmaller x
         else fEqual x
 
-    let inline cmpInt fGreater fSmaller fEqual x =
+    /// Checks if number is greater, smaller or equal to zero and
+    /// executes corresponding function.
+    let inline cmpInt fGreater fSmaller fEqual (x:int) =
         if   x > 0 then fGreater x
         elif x < 0 then fSmaller x
         else fEqual x
@@ -44,7 +51,7 @@ module Extensions =
     let is x _ = x
 
     // StackTrace as a String
-    let stackTrace (skip:int) =
+    let stackTrace (skip:int) : string =
         let skip = if skip < 0 then 1 else skip+1
         let st   = System.Diagnostics.StackTrace(skip, true)
         "  " + System.String.Join("\n  ",
@@ -72,6 +79,8 @@ module Extensions =
         not (nearly target difference value)
 
     module Rectangle =
+        /// Returns a Rectangle from two Vectors. Correctly computes topLeft
+        /// corner from both vectors and sets the width/height
         let fromVectors (v1:Vector2) (v2:Vector2) =
             Rectangle(
                 (min v1.X v2.X),     (min v1.Y v2.Y),
