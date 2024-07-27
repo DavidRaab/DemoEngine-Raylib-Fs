@@ -133,10 +133,13 @@ module Extensions =
     type System.Collections.Generic.Dictionary<'a,'b> with
         /// add or overwrites value for specified key. return value of `true`
         /// inidicates that the key was added to the Dictionary
-        static member inline add key value (dic:Dictionary<'a,'b>) =
+        static member inline add key value (dic:Dictionary<'a,'b>) : unit =
             if dic.ContainsKey(key)
-            then dic.[key] <- value; false
-            else dic.Add(key,value); true
+            then dic.[key] <- value
+            else dic.Add(key,value)
+
+        static member inline remove key (dic:Dictionary<'a,'b>) =
+            dic.Remove(key)
 
         static member change key f (dic:Dictionary<'a,'b>) =
             match dic.TryGetValue key with
@@ -154,7 +157,7 @@ module Extensions =
             | true, value -> dic.[key] <- f value
             | false, _    -> dic.Add(key, f defaultValue)
 
-        static member inline find key (dic:Dictionary<'a,'b>) =
+        static member inline get key (dic:Dictionary<'a,'b>) =
             match dic.TryGetValue key with
             | true, value -> ValueSome value
             | false, _    -> ValueNone

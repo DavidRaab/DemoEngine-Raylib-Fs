@@ -1,6 +1,7 @@
 namespace MyGame.Systems
 open Raylib_cs
 open System.Numerics
+open Dic2
 open MyGame
 open MyGame.Extensions
 open MyGame.DataTypes
@@ -20,7 +21,7 @@ module View =
         match me.Parent with
         | ValueNone        -> ValueSome (me.Position,me.Rotation,me.Scale)
         | ValueSome parent ->
-            match State.Transform.get parent with
+            match Dictionary.get parent State.Transform with
             | ValueNone        -> ValueNone
             | ValueSome parent ->
                 (calculateTransform parent) |> ValueOption.map (fun (pPos,pRot,pScale) ->
@@ -34,17 +35,8 @@ module View =
                     pos,pRot+me.Rotation,scale
                 )
 
-    let draw () =
-        let transformAndView = [|
-            for KeyValue(entity,v) in State.View.visible do
-                match State.Transform.get entity with
-                | ValueSome t -> (t,v)
-                | ValueNone   -> ()
-        |]
-
-        transformAndView |> Array.sortInPlaceBy (fun (_,v) -> v.Layer)
-        for transform,view in transformAndView do
-            match calculateTransform transform with
+    let inline drawTexture transform view =
+        match calculateTransform transform with
             | ValueNone                           -> ()
             | ValueSome (position,rotation,scale) ->
                 Raylib.DrawTexturePro(
@@ -56,11 +48,50 @@ module View =
                     tint     = view.Tint
                 )
 
+    let draw () =
+        State.View |> Dic2.iter (true,BG3) (fun entity v ->
+            match Dictionary.get entity State.Transform with
+            | ValueSome t -> drawTexture t v
+            | ValueNone   -> ()
+        )
+
+        State.View |> Dic2.iter (true,BG2) (fun entity v ->
+            match Dictionary.get entity State.Transform with
+            | ValueSome t -> drawTexture t v
+            | ValueNone   -> ()
+        )
+
+        State.View |> Dic2.iter (true,BG1) (fun entity v ->
+            match Dictionary.get entity State.Transform with
+            | ValueSome t -> drawTexture t v
+            | ValueNone   -> ()
+        )
+
+        State.View |> Dic2.iter (true,FG3) (fun entity v ->
+            match Dictionary.get entity State.Transform with
+            | ValueSome t -> drawTexture t v
+            | ValueNone   -> ()
+        )
+
+        State.View |> Dic2.iter (true,FG2) (fun entity v ->
+            match Dictionary.get entity State.Transform with
+            | ValueSome t -> drawTexture t v
+            | ValueNone   -> ()
+        )
+
+        State.View |> Dic2.iter (true,FG1) (fun entity v ->
+            match Dictionary.get entity State.Transform with
+            | ValueSome t -> drawTexture t v
+            | ValueNone   -> ()
+        )
+
+
 // Moves those who should be moved
 module Movement =
     let update (deltaTime:float32) =
-        for KeyValue(entity,mov) in State.Movement.Data do
-            entity |> State.Transform.fetch (fun t ->
+        for KeyValue(entity,mov) in State.Movement do
+            match Dictionary.get entity State.Transform with
+            | ValueSome t ->
                 match mov.Direction with
                 | ValueNone                        -> ()
                 | ValueSome (Relative dir)         -> Transform.addPosition (dir * deltaTime) t
@@ -71,7 +102,8 @@ module Movement =
                 match mov.Rotation with
                 | ValueNone     -> ()
                 | ValueSome rot -> Transform.addRotation (rot * deltaTime) t
-            )
+            | ValueNone ->
+                ()
 
 module Timer =
     let mutable state = ResizeArray<Timed<unit>>()
@@ -89,14 +121,15 @@ module Timer =
 module Animations =
     let update (deltaTime:float32) =
         let deltaTime = TimeSpan.FromSeconds(float deltaTime)
-        for KeyValue(entity,anim) in State.Animation.Data do
+        for KeyValue(entity,anim) in State.Animation do
             anim.ElapsedTime <- anim.ElapsedTime + deltaTime
             if anim.ElapsedTime > anim.CurrentSheet.FrameDuration then
                 anim.ElapsedTime <- anim.ElapsedTime - anim.CurrentSheet.FrameDuration
                 Animation.nextSprite anim
-                entity |> State.View.iter (fun view ->
-                    Animation.updateView view anim
-                )
+                match Dic2.get entity State.View with
+                | ValueSome (_,view) -> Animation.updateView view anim
+                | ValueNone          -> ()
+
 
 module Drawing =
     let mousePosition mousePos fontSize (whereToDraw:Vector2) =
@@ -110,7 +143,8 @@ module Drawing =
         )
 
     let trackPosition (entity:Entity) fontSize (whereToDraw:Vector2) =
-        entity |> State.Transform.fetch (fun t ->
+        match Dictionary.get entity State.Transform with
+        | ValueSome t ->
             let screen = Raylib.GetWorldToScreen2D(t.Position, State.camera)
             Raylib.DrawText(
                 text =
@@ -123,7 +157,8 @@ module Drawing =
                 fontSize = fontSize,
                 color    = Color.Yellow
             )
-        )
+        | ValueNone ->
+            ()
 
     let line (thickness:float32) color (start:Vector2) (stop:Vector2) =
         Raylib.DrawLineEx(start, stop, thickness, color)

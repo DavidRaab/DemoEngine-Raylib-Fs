@@ -19,9 +19,9 @@ module Dic2 =
 
     /// Adds a key to a dictionary
     let inline dicAdd key value (dic:Dic<'Key,'Value>) =
-        match dic.TryGetValue(key) with
-        | true,  _ -> dic.[key] <- value
-        | false, _ -> dic.Add(key,value)
+        if dic.ContainsKey(key)
+        then dic.[key] <- value
+        else dic.Add(key,value)
 
     /// Trys to fetch a key from a Dictionary, when it does not exists it executes
     /// an initialization function and returns this value
@@ -33,11 +33,11 @@ module Dic2 =
             dic.Add(key,value)
             value
 
-    let clear data =
+    let clear data : unit =
         data.BToA.Clear()
         data.Data.Clear()
 
-    let count data =
+    let count data : int =
         // Also could just return BToA.Count
         let mutable count = 0
         for KeyValue(_,inner) in data.Data do
@@ -82,7 +82,7 @@ module Dic2 =
                 dicAdd keyB keyA  data.BToA
                 dicAdd keyB value inner
 
-    let inline iter (keyA:'KeyA) ([<InlineIfLambda>] f : 'KeyB -> 'Value -> unit) data =
+    let inline iter (keyA:'KeyA) ([<InlineIfLambda>] f : 'KeyB -> 'Value -> unit) data : unit =
         match data.Data.TryGetValue(keyA) with
         | false, _    -> ()
         | true, inner ->

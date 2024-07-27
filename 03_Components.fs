@@ -175,13 +175,12 @@ module View =
     let inline create (v:View) : View = v
 
     /// Generates a View
-    let fromSprite origin (layer:Layer) (sprite:Sprite) : View = {
+    let fromSprite origin (sprite:Sprite) : View = {
         Sprite    = sprite
         Tint      = Color.White
         Rotation  = 0.0f<deg>
         Origin    = Origin.toPosition (float32 sprite.SrcRect.Width) (float32 sprite.SrcRect.Height) origin
         Scale     = Vector2.One
-        Layer     = byte layer
     }
 
     let fromSpriteTop    = fromSprite Top
@@ -191,7 +190,7 @@ module View =
     let fromSpriteCenter = fromSprite Center
 
     /// Generates a View from a Sheet by using the selected Sprite
-    let fromSheet (layer:Layer) index (sheet:Sheet) : View = {
+    let fromSheet index (sheet:Sheet) : View = {
         Sprite =
             Array.tryItem index sheet.Sprites |> Option.defaultWith (fun _ ->
                 eprintfn "Index [%d] out of Range. Max index is [%d] at\n%s"
@@ -204,7 +203,6 @@ module View =
         Rotation  = 0.0f<deg>
         Origin    = Vector2.Zero
         Scale     = Vector2.One
-        Layer     = byte layer
     }
 
     // Immutable Properties
@@ -269,14 +267,13 @@ module Sheets =
         Map.find name sheets.Sheets
 
     /// Creates a View from the currently set sprite sheet
-    let createView (layer:Layer) origin (sheets:Sheets) : View =
+    let createView origin (sheets:Sheets) : View =
         let sprite = sheets.Sheets.[sheets.Default].Sprites.[0]
         View.create {
             Sprite   = sprite
             Rotation = 0f<deg>
             Tint     = Color.White
             Scale    = Vector2.One
-            Layer    = byte layer
             Origin   = Origin.toPosition (float32 sprite.SrcRect.Width) (float32 sprite.SrcRect.Height) origin
         }
 

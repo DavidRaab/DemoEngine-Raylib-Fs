@@ -29,7 +29,7 @@ type Model = {
 let boxes assets =
     // black box that rotates
     let boxesOrigin = Entity.init (fun e ->
-        e.addView      (View.fromSpriteCenter Layer.BG1 assets.Sprites.WhiteBox |> View.setTint Color.Black)
+        e.addView      BG1 (View.fromSpriteCenter assets.Sprites.WhiteBox |> View.setTint Color.Black)
         e.addTransform (Transform.fromPosition 0f 0f)
         e.addMovement {
             Direction = ValueNone // ValueSome (Relative (Vector2.Right * 50f))
@@ -62,7 +62,7 @@ let boxes assets =
                     // must be computed with a matrix calculated of the parent.
                     |> Transform.withParent (ValueSome boxesOrigin)
                 )
-                box.addView      (Sheets.createView Layer.BG2 Center assets.Box)
+                box.addView      BG2 (Sheets.createView Center assets.Box)
                 box.addAnimation (Animation.create assets.Box)
                 box.addMovement {
                     Direction = ValueNone //ValueSome (Relative (Vector2.Right * 25f))
@@ -78,7 +78,7 @@ let boxes assets =
         for box in boxes do
             // 10% of all boxes will move to world position 0,0 with 10px per second
             // all other boxes move in a random direction at 25px per second
-            box |> State.Movement.add {
+            State.Movement |> Dictionary.add box {
                 Direction = ValueSome(
                     if   rng.NextSingle() < 0.1f
                     then Absolute (Vector2.Zero,10f)
@@ -129,19 +129,19 @@ let initModel assets =
             Transform.fromPosition 100f 100f
             // |> Transform.setRotationVector (Vector2.Right)
         )
-        e.addView (View.fromSpriteCenter Layer.FG1 assets.Sprites.Arrow)
+        e.addView FG1 (View.fromSpriteCenter assets.Sprites.Arrow)
         Systems.Timer.addTimer (Timer.every (sec 0.1) () (fun _ dt ->
-            e |> State.Transform.fetch (fun tf ->
-                Transform.addRotation 10f<deg> tf
-            )
+            match Dictionary.get e State.Transform with
+            | ValueSome t -> Transform.addRotation 10f<deg> t
+            | ValueNone   -> ()
             State ()
         ))
     )
 
     let knight = Entity.init (fun e ->
         e.addTransform (Transform.fromPosition 0f 0f)
-        e.addView (
-            Sheets.createView Layer.FG1 Top assets.Knight
+        e.addView FG1 (
+            Sheets.createView Top assets.Knight
             |> View.setScale (Vector2.create 2f 2f)
         )
         e.addAnimation (Animation.create assets.Knight)
@@ -153,27 +153,31 @@ let initModel assets =
             Transform.fromPosition 0f 80f
             |> Transform.withParent (ValueSome knight)
         )
-        e.addView (
-            View.fromSpriteCenter Layer.FG1 assets.Sprites.WhiteBox
+        e.addView FG1 (
+            View.fromSpriteCenter assets.Sprites.WhiteBox
             |> View.setTint Color.Blue
         )
     )
 
     let sun = Entity.init (fun e ->
         e.addTransform (Transform.fromPosition 200f 200f)
-        e.addView (
-            View.fromSpriteCenter Layer.FG1 assets.Sprites.WhiteBox
+        e.addView FG1 (
+            View.fromSpriteCenter assets.Sprites.WhiteBox
             |> View.setTint Color.Yellow
         )
         Systems.Timer.addTimer (Timer.every (sec 0.1) (Choice1Of2 0) (fun state dt ->
             match state with
             | Choice1Of2 right ->
-                e |> State.Transform.fetch (Transform.addPosition (Vector2.Right * 5f))
+                Dictionary.get e State.Transform
+                |> ValueOption.iter (Transform.addPosition (Vector2.Right * 5f))
+
                 if right < 20
                 then State (Choice1Of2 (right+1))
                 else State (Choice2Of2 (right-1))
             | Choice2Of2 left ->
-                e |> State.Transform.fetch (Transform.addPosition (Vector2.Left * 5f))
+                Dictionary.get e State.Transform
+                |> ValueOption.iter (Transform.addPosition (Vector2.Left * 5f))
+
                 if left > 0
                 then State (Choice2Of2 (left-1))
                 else State (Choice1Of2 (left+1))
@@ -185,8 +189,8 @@ let initModel assets =
             Transform.fromPosition 0f -100f
             |> Transform.withParent (ValueSome sun)
         )
-        e.addView (
-            View.fromSpriteCenter Layer.FG1 assets.Sprites.WhiteBox
+        e.addView FG1 (
+            View.fromSpriteCenter assets.Sprites.WhiteBox
             |> View.setTint Color.DarkBlue
         )
     )
@@ -196,8 +200,8 @@ let initModel assets =
             Transform.fromPosition 0f -50f
             |> Transform.withParent (ValueSome planet1)
         )
-        e.addView (
-            View.fromSpriteCenter Layer.FG1 assets.Sprites.WhiteBox
+        e.addView FG1 (
+            View.fromSpriteCenter assets.Sprites.WhiteBox
             |> View.setTint Color.DarkPurple
         )
     )
@@ -207,15 +211,19 @@ let initModel assets =
             Transform.fromPosition 0f -20f
             |> Transform.withParent (ValueSome planet2)
         )
-        e.addView (
-            View.fromSpriteCenter Layer.FG1 assets.Sprites.WhiteBox
+        e.addView FG1 (
+            View.fromSpriteCenter assets.Sprites.WhiteBox
             |> View.setTint Color.Brown
         )
     )
 
     // Let stars rotate at 60 fps and 1° each frame
-    Systems.Timer.addTimer (Timer.every (sec (1.0/60.0)) () (fun state dt ->
-        List.iter (State.Transform.fetch (Transform.addRotation 1f<deg>)) [sun;planet1;planet2;planet3]
+    Systems.Timer.addTimer (Timer.every (sec (1.0/60.0)) () (fun _ _ ->
+        [sun;planet1;planet2;planet3] |> List.iter (fun p ->
+            match Dictionary.get p State.Transform with
+            | ValueSome t -> Transform.addRotation 1f<deg> t
+            | ValueNone   -> ()
+        )
         State ()
     ))
 
@@ -223,16 +231,18 @@ let initModel assets =
     Systems.Timer.addTimer (Timer.every (sec 0.1) (Choice1Of2 0) (fun state dt ->
         match state with
         | Choice1Of2 state ->
-            box |> State.Transform.fetch (fun t ->
-                Transform.addPosition (Vector2.create 10f 0f) t
-            )
+            match Dictionary.get box State.Transform with
+            | ValueSome t -> Transform.addPosition (Vector2.create 10f 0f) t
+            | ValueNone   -> ()
+
             if state < 4
             then State (Choice1Of2 (state+1))
             else State (Choice2Of2 (state+1))
         | Choice2Of2 state ->
-            box |> State.Transform.fetch (fun t ->
-                Transform.addPosition (Vector2.create -10f 0f) t
-            )
+            match Dictionary.get box State.Transform with
+            | ValueSome t -> Transform.addPosition (Vector2.create -10f 0f) t
+            | ValueNone   -> ()
+
             if state > -4
             then State (Choice2Of2 (state-1))
             else State (Choice1Of2 (state-1))
@@ -560,13 +570,13 @@ let draw (model:Model) (deltaTime:float32) =
             Systems.Drawing.mousePosition    (mousePos) 20 (Vector2.create 0f 320f)
             Systems.Drawing.trackPosition  model.Knight 20 (Vector2.create 0f 340f)
 
-            Raylib.DrawText(
-                text     = String.Format("Visible: {0}", State.View.visible.Count),
-                posX     = 320,
-                posY     = 3,
-                fontSize = 20,
-                color    = Color.Yellow
-            )
+            // Raylib.DrawText(
+            //     text     = String.Format("Visible: {0}", Dic2.Dic2.count State.View.visible.Count),
+            //     posX     = 320,
+            //     posY     = 3,
+            //     fontSize = 20,
+            //     color    = Color.Yellow
+            // )
         )
     )
 

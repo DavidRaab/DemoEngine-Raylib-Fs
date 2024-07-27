@@ -1,4 +1,5 @@
 namespace MyGame.Entity
+open Dic2
 open MyGame
 open MyGame.DataTypes
 open MyGame.Components
@@ -32,20 +33,21 @@ module Entity =
 [<AutoOpen>]
 module EntityExtension =
     type Entity with
-        member entity.addTransform t     = State.Transform.add t entity
-        member entity.deleteTransform () = State.Transform.delete entity
-        member entity.addView view       = State.View.add entity true view
-        member entity.deleteView ()      = State.View.remove entity
-        member entity.addMovement mov    = State.Movement.add mov entity
-        member entity.deleteMovement ()  = State.Movement.delete entity
-        member entity.addAnimation anim  = State.Animation.add anim entity
-        member entity.deleteAnimation () = State.Animation.delete entity
+        member entity.addTransform t     = Dictionary.add    entity t    State.Transform
+        member entity.deleteTransform () = Dictionary.remove entity      State.Transform
+        member entity.addMovement mov    = Dictionary.add    entity mov  State.Movement
+        member entity.deleteMovement ()  = Dictionary.remove entity      State.Movement
+        member entity.addAnimation anim  = Dictionary.add    entity anim State.Animation
+        member entity.deleteAnimation () = Dictionary.remove entity      State.Animation
+        member entity.addView layer view = Dic2.add (true,layer) entity view State.View
+        member entity.deleteView ()      = Dic2.remove entity State.View
         member entity.setAnimation name =
-            entity |> State.Animation.fetch (fun anim ->
-                Animation.switchAnimation name anim
-            )
+            match Dictionary.get entity State.Animation with
+            | ValueSome anim -> Animation.switchAnimation name anim
+            | ValueNone      -> ()
+
         member entity.getSheetExn name : Sheet =
-            match State.Animation.get entity with
+            match Dictionary.get entity State.Animation with
             | ValueSome anim -> anim.Sheets.Sheets.[name]
             | ValueNone      -> failwithf "%A has no SheetAnimations" entity
 

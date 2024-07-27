@@ -33,12 +33,12 @@ type Origin =
 /// The number indicates a Depth. Example: So BG3 is further away than BG1.
 /// This means elements in BG1 are always drawn on top of BG3.
 type Layer =
-    | BG3 = 1uy
-    | BG2 = 2uy
-    | BG1 = 3uy
-    | FG3 = 4uy
-    | FG2 = 5uy
-    | FG1 = 6uy
+    | BG3
+    | BG2
+    | BG1
+    | FG3
+    | FG2
+    | FG1
 
 type Viewport = {
     Width:  int
@@ -57,7 +57,6 @@ type View = {
     mutable Rotation: float32<deg>
     mutable Tint:     Color
     mutable Scale:    Vector2
-    Layer:  byte
     Origin: Vector2
 }
 
