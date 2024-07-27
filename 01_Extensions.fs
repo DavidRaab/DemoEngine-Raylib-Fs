@@ -78,23 +78,6 @@ module Extensions =
                 (abs (v1.X - v2.X)), (abs (v1.Y - v2.Y))
             )
 
-    // type Graphics.SpriteBatch with
-    //     member this.DrawO(
-    //         texture: Texture2D, position: Vector2,
-    //         ?sourceRectangle: Rectangle, ?scale: Vector2, ?color: Color,
-    //         ?rotation: float32, ?origin: Vector2,
-    //         ?effects: SpriteEffects, ?layerDepth: float32
-    //     ) =
-    //         let srcRect    = defaultArg sourceRectangle (Rectangle(0,0,texture.Width, texture.Height))
-    //         let scale      = defaultArg scale            Vector2.One
-    //         let color      = defaultArg color            Color.White
-    //         let rotation   = defaultArg rotation         0.0f
-    //         let origin     = defaultArg origin           Vector2.Zero
-    //         let effects    = defaultArg effects          SpriteEffects.None
-    //         let layerDepth = defaultArg layerDepth       0f
-    //         this.Draw(texture, position, srcRect, color, rotation, origin, scale, effects, layerDepth)
-
-
     module TimeSpan =
         let oneSecond = sec 1.0
 
