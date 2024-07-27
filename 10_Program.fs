@@ -40,21 +40,28 @@ let boxes assets =
     let boxes = ResizeArray<_>()
     //     0 boxes                -> 12500 fps
     //
-    //  3000 boxes without parent -> 2500 fps
-    //  4000 boxes without parent -> 1950 fps
-    //  5000 boxes without parent -> 1550 fps
-    //  6000 boxes without parent -> 1300 fps
-    // 10000 boxes without parent ->  600 fps
+    //  3000 boxes without parent -> 2100 fps
+    //  4000 boxes without parent -> 1600 fps
+    //  5000 boxes without parent -> 1300 fps
+    //  6000 boxes without parent -> 1120 fps
+    // 10000 boxes without parent ->  690 fps
+    // 40000 boxes without parent ->  180 fps
+    // 90000 boxes without parent ->   90 fps
     //
-    //  3000 boxes with parent    -> 1550 fps
-    //  4000 boxes with parent    -> 1150 fps
-    //  5000 boxes with parent    ->  925 fps
-    //  6000 boxes with parent    ->  750 fps
-    // 10000 boxes with parent    ->  350 fps
+    //  3000 boxes with parent    -> 1700 fps
+    //  4000 boxes with parent    -> 1300 fps
+    //  5000 boxes with parent    -> 1050 fps
+    //  6000 boxes with parent    ->  900 fps
+    // 10000 boxes with parent    ->  550 fps
+    // 40000 boxes with parent    ->  130 fps
+    //    - has stutter because every second i traverse through each box and set
+    //      a new random direction. This should be optimally run on a separate thead
+    //      and not the main thread. without this logic no stutter at all
+    // 90000 boxes with parent    ->   60 fps
     //
-    // Create 3600 Boxes as child of boxesOrigin (1320 fps)
-    for x=1 to 60 do
-        for y=1 to 60 do
+    // Create 3600 Boxes as child of boxesOrigin (1450 fps)
+    for x=1 to 100 do
+        for y=1 to 30 do
             boxes.Add (Entity.init (fun box ->
                 box.addTransform       (
                     Transform.fromPosition (float32 x * 11f) (float32 y * 11f)
@@ -62,8 +69,8 @@ let boxes assets =
                     // must be computed with a matrix calculated of the parent.
                     |> Transform.withParent (ValueSome boxesOrigin)
                 )
-                box.addView      Layer.BG2 (Sheets.createView Center assets.Box)
-                box.addAnimation (Animation.create assets.Box)
+                box.addView Layer.BG2 (View.fromSprite Center assets.Sprites.Enemy)
+                // box.addAnimation (Animation.create assets.Box)
                 box.addMovement {
                     Direction = ValueNone //ValueSome (Relative (Vector2.Right * 25f))
                     Rotation  = ValueSome (90f<deg>)
