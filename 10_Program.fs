@@ -491,10 +491,12 @@ let update (model:Model) (deltaTime:float32) =
     let inline isDown key : bool    = CBool.op_Implicit(Raylib.IsKeyDown(key))
     let inline addPos (pos:Vector2) = State.camera.Target <- (State.camera.Target + (pos * deltaTime))
 
-    if isDown Key.W    then addPos (Vector2.Up    * 150f)
-    if isDown Key.A    then addPos (Vector2.Left  * 150f)
-    if isDown Key.S    then addPos (Vector2.Down  * 150f)
-    if isDown Key.D    then addPos (Vector2.Right * 150f)
+    let speed        = 300f
+    let invertedZoom = 1f / State.camera.Zoom
+    if isDown Key.W    then addPos (Vector2.Up    * speed * invertedZoom)
+    if isDown Key.A    then addPos (Vector2.Left  * speed * invertedZoom)
+    if isDown Key.S    then addPos (Vector2.Down  * speed * invertedZoom)
+    if isDown Key.D    then addPos (Vector2.Right * speed * invertedZoom)
     if isDown Key.Z    then State.camera.Zoom   <- 1f
     if isDown Key.R    then State.camera.Zoom   <- min   3f (State.camera.Zoom + (1f * deltaTime))
     if isDown Key.F    then State.camera.Zoom   <- max 0.1f (State.camera.Zoom - (1f * deltaTime))
@@ -629,7 +631,7 @@ let main argv =
     // RenderTexture with that Resolution. Then this RenderTexture is scaled to
     // the window screen. Scaling tries to fit as much of the windows as it is
     // possible while keeping aspect Ratio of the defined virtual resolution intact.
-    let screenWidth,  screenHeight  = 1200, 600
+    let screenWidth,  screenHeight  = 1280, 720
     let virtualWidth, virtualHeight = 640, 360
     let screenAspect = float32 screenWidth  / float32 screenHeight
     let targetAspect = float32 virtualWidth / float32 virtualHeight
@@ -662,6 +664,11 @@ let main argv =
     let offset = Vector2(float32 virtualWidth / 2f, float32 virtualHeight /2f)
     State.camera   <- Camera2D(offset,       Vector2.Zero, 0f, 1f) // World Camera
     State.uiCamera <- Camera2D(Vector2.Zero, Vector2.Zero, 0f, 1f) // Camera for GUI elements
+
+    // Set Object Culling Properties
+    Systems.View.offset <- 64f
+    Systems.View.halfX  <- float32 virtualWidth  / 2f
+    Systems.View.halfY  <- float32 virtualHeight / 2f
 
     // Load Game Assets and initialize first Model
     let assets        = Assets.load ()

@@ -35,7 +35,23 @@ module View =
                     pos,pRot+me.Rotation,scale
                 )
 
-    let inline drawTexture transform view (struct (minX,maxX,minY,maxY)) =
+    // Special variables used for object culling. I assume that the camera is
+    // always centered. Mean a camera that target world position 0,0 shows this
+    // point at the center of the camera. From this point only objects that
+    // are half the screen width to any direction away will be rendered. + some
+    // offset so sprites don't disappear.
+    // Whenever a new frame starts to render, the (min|max)(X|Y) are updated.
+    // The offset and halfScreen should be set at program start. halfScreen
+    // should be the half of the virtualScreen
+    let mutable halfX  = 360f
+    let mutable halfY  = 180f
+    let mutable offset = 64f
+    let mutable minX   = 0f
+    let mutable maxX   = 0f
+    let mutable minY   = 0f
+    let mutable maxY   = 0f
+
+    let inline drawTexture transform view =
         match calculateTransform transform with
             | ValueNone                           -> ()
             | ValueSome (pos,rotation,scale) ->
@@ -51,52 +67,52 @@ module View =
                     )
 
     let draw () =
+        // Used to track how many objects were really drawn
         State.drawed <- 0
+
         // Some simple object culling, just camera center + some offset so objects
         // that are on the edge of screen don't dissapear when they hit the edge.
         // But would be a cool Retro effect of early 3D games.
         let cam  = State.camera.Target
         let zoom = State.camera.Zoom
-        let viewRect = struct (
-            cam.X - ((320f + 64f) * (1f / zoom)),
-            cam.X + ((320f + 64f) * (1f / zoom)),
-            cam.Y - ((180f + 64f) * (1f / zoom)),
-            cam.Y + ((180f + 64f) * (1f / zoom))
-        )
+        minX <- cam.X - ((halfX + offset) * (1f / zoom))
+        maxX <- cam.X + ((halfX + offset) * (1f / zoom))
+        minY <- cam.Y - ((halfY + offset) * (1f / zoom))
+        maxY <- cam.Y + ((halfY + offset) * (1f / zoom))
 
         State.View |> Dic2.iter (true,Layer.BG3) (fun entity v ->
             match Dictionary.get entity State.Transform with
-            | ValueSome t -> drawTexture t v viewRect
+            | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
         State.View |> Dic2.iter (true,Layer.BG2) (fun entity v ->
             match Dictionary.get entity State.Transform with
-            | ValueSome t -> drawTexture t v viewRect
+            | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
         State.View |> Dic2.iter (true,Layer.BG1) (fun entity v ->
             match Dictionary.get entity State.Transform with
-            | ValueSome t -> drawTexture t v viewRect
+            | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
         State.View |> Dic2.iter (true,Layer.FG3) (fun entity v ->
             match Dictionary.get entity State.Transform with
-            | ValueSome t -> drawTexture t v viewRect
+            | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
         State.View |> Dic2.iter (true,Layer.FG2) (fun entity v ->
             match Dictionary.get entity State.Transform with
-            | ValueSome t -> drawTexture t v viewRect
+            | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
         State.View |> Dic2.iter (true,Layer.FG1) (fun entity v ->
             match Dictionary.get entity State.Transform with
-            | ValueSome t -> drawTexture t v viewRect
+            | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
