@@ -361,7 +361,7 @@ let mutable resetInput = false
 let fixedUpdateTiming = 1.0f / 60.0f
 let fixedUpdate model (deltaTime:float32) =
     Systems.Timer.update      deltaTime
-    Systems.Movement.update deltaTime
+    Systems.Movement.update   deltaTime
     Systems.Animations.update deltaTime
 
     (*
