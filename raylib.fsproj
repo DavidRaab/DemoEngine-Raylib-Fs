@@ -22,7 +22,7 @@
       <Compile Include="05_Entity.fs" />
       <Compile Include="06_Systems.fs" />
       <Compile Include="07_Utility.fs" />
-      <Compile Include="09_Assets.fs" />
-      <Compile Include="10_Program.fs" />
+      <Compile Include="08_Assets.fs" />
+      <Compile Include="09_Program.fs" />
   </ItemGroup>
 </Project>
