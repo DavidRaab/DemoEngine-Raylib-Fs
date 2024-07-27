@@ -51,6 +51,8 @@ parent object.
 | 40000 boxes with parent    |  130 fps  |  300 fps
 | 90000 boxes with parent    |   60 fps  |  190 fps
 
+Oh, i am using Dictionaries as my primary data-structure not Arrays.
+
 # Features implemented
 
 * **Entity**: Everything is an entity and you can add/remove components at runtime.
