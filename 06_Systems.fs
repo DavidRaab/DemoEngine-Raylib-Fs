@@ -40,6 +40,7 @@ module View =
             | ValueNone                           -> ()
             | ValueSome (pos,rotation,scale) ->
                 if pos.X > minX && pos.X < maxX && pos.Y > minY && pos.Y < maxY then
+                    State.drawed <- State.drawed + 1
                     Raylib.DrawTexturePro(
                         texture  = view.Sprite.Texture,
                         source   = view.Sprite.SrcRect,
@@ -50,6 +51,7 @@ module View =
                     )
 
     let draw () =
+        State.drawed <- 0
         // Some simple object culling, just camera center + some offset so objects
         // that are on the edge of screen don't dissapear when they hit the edge.
         // But would be a cool Retro effect of early 3D games.

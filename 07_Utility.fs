@@ -337,10 +337,8 @@ module FInput =
 
 type FPS = {
     mutable Updates:     int
-    mutable Draws:       int
     mutable ElapsedTime: float
     mutable UpdateFPS:   float
-    mutable DrawFPS:     float
 }
 
 module FPS =
@@ -349,10 +347,8 @@ module FPS =
     // Global State
     let state = create {
         Updates     = 0
-        Draws       = 0
         ElapsedTime = 0
         UpdateFPS   = 0
-        DrawFPS     = 0
     }
 
     // Called on each update
@@ -363,15 +359,12 @@ module FPS =
 
         if state.ElapsedTime >= 1.0 then
             state.UpdateFPS   <- float state.Updates / state.ElapsedTime
-            state.DrawFPS     <- float state.Draws   / state.ElapsedTime
             state.Updates     <- 0
-            state.Draws       <- 0
             state.ElapsedTime <- state.ElapsedTime - 1.0
 
     let draw () =
-        state.Draws <- state.Draws + 1
         Raylib.DrawText(
-            text     = String.Format("Update/Draw: {0:0} {1:0}", state.UpdateFPS, state.DrawFPS),
+            text     = String.Format("FPS: {0:0}", state.UpdateFPS),
             posX     = 3,
             posY     = 3,
             fontSize = 20,

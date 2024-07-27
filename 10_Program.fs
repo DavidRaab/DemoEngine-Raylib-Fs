@@ -44,7 +44,7 @@ let boxes assets =
     // everything is shown. The fps in parenthesis show how many fps are archived
     // with default zoom level and screen is full of boxes.
     //
-    //     0 boxes                -> 12500 fps
+    //     0 boxes                -> 8600 fps
     //
     //                                All     | Culling
     //                               ---------+----------
@@ -70,8 +70,8 @@ let boxes assets =
                     // must be computed with a matrix calculated of the parent.
                     // |> Transform.withParent (ValueSome boxesOrigin)
                 )
-                box.addView Layer.BG2 (View.fromSprite Center assets.Sprites.Enemy)
-                // box.addAnimation (Animation.create assets.Box)
+                box.addView Layer.BG2 (Sheets.createView Center assets.Box)
+                box.addAnimation (Animation.create assets.Box)
                 box.addMovement {
                     Direction = ValueNone //ValueSome (Relative (Vector2.Right * 25f))
                     Rotation  = ValueSome (90f<deg>)
@@ -361,7 +361,7 @@ let mutable resetInput = false
 let fixedUpdateTiming = 1.0f / 60.0f
 let fixedUpdate model (deltaTime:float32) =
     Systems.Timer.update      deltaTime
-    Systems.Movement.update   deltaTime
+    Systems.Movement.update deltaTime
     Systems.Animations.update deltaTime
 
     (*
@@ -491,14 +491,14 @@ let update (model:Model) (deltaTime:float32) =
     let inline isDown key : bool    = CBool.op_Implicit(Raylib.IsKeyDown(key))
     let inline addPos (pos:Vector2) = State.camera.Target <- (State.camera.Target + (pos * deltaTime))
 
-    if isDown KeyboardKey.W    then addPos (Vector2.Up    * 150f)
-    if isDown KeyboardKey.A    then addPos (Vector2.Left  * 150f)
-    if isDown KeyboardKey.S    then addPos (Vector2.Down  * 150f)
-    if isDown KeyboardKey.D    then addPos (Vector2.Right * 150f)
-    if isDown KeyboardKey.Z    then State.camera.Zoom   <- 1f
-    if isDown KeyboardKey.R    then State.camera.Zoom   <- min   3f (State.camera.Zoom + (1f * deltaTime))
-    if isDown KeyboardKey.F    then State.camera.Zoom   <- max 0.1f (State.camera.Zoom - (1f * deltaTime))
-    if isDown KeyboardKey.Home then State.camera.Target <- Vector2(0f,0f)
+    if isDown Key.W    then addPos (Vector2.Up    * 150f)
+    if isDown Key.A    then addPos (Vector2.Left  * 150f)
+    if isDown Key.S    then addPos (Vector2.Down  * 150f)
+    if isDown Key.D    then addPos (Vector2.Right * 150f)
+    if isDown Key.Z    then State.camera.Zoom   <- 1f
+    if isDown Key.R    then State.camera.Zoom   <- min   3f (State.camera.Zoom + (1f * deltaTime))
+    if isDown Key.F    then State.camera.Zoom   <- max 0.1f (State.camera.Zoom - (1f * deltaTime))
+    if isDown Key.Home then State.camera.Target <- Vector2(0f,0f)
 
     // Get current keyboard/GamePad state and add it to our KeyBoard/GamePad module
     // This way we ensure that fixedUpdate has correct keyboard/GamePad state between
@@ -592,13 +592,18 @@ let draw (model:Model) (deltaTime:float32) =
             Systems.Drawing.mousePosition    (mousePos) 20 (Vector2.create 0f 320f)
             Systems.Drawing.trackPosition  model.Knight 20 (Vector2.create 0f 340f)
 
-            // Raylib.DrawText(
-            //     text     = String.Format("Visible: {0}", Dic2.Dic2.count State.View.visible.Count),
-            //     posX     = 320,
-            //     posY     = 3,
-            //     fontSize = 20,
-            //     color    = Color.Yellow
-            // )
+            let mutable visibleCount = 0
+            for key in State.View.Data.Keys do
+                match key with
+                | true,  _ -> visibleCount <- visibleCount + State.View.Data.[key].Count
+                | false, _ -> ()
+            Raylib.DrawText(
+                text     = String.Format("Visible: {0} {1}", visibleCount, State.drawed),
+                posX     = 250,
+                posY     = 3,
+                fontSize = 20,
+                color    = Color.Yellow
+            )
         )
     )
 

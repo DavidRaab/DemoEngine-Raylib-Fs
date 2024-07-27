@@ -7,6 +7,9 @@ open MyGame.DataTypes
 type Dictionary<'a,'b> = System.Collections.Generic.Dictionary<'a,'b>
 
 module State =
+    /// Stores information on how many DrawTexture() calls
+    /// happened in draw. Resets every frame.
+    let mutable drawed   = 0
     let mutable camera   = Unchecked.defaultof<Camera2D>
     let mutable uiCamera = Unchecked.defaultof<Camera2D>
     let Transform        = Dictionary<Entity,Transform>()

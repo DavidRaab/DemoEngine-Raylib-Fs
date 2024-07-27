@@ -14,7 +14,6 @@ and Sprites = {
     Missing:  Sprite
     Arrow:    Sprite
     WhiteBox: Sprite
-    Enemy:    Sprite
 }
 
 module Assets =
@@ -26,6 +25,18 @@ module Assets =
         let texture width height color =
             Raylib.GenImageColor(width, height, color)
             |> Raylib.LoadTextureFromImage
+        let tint image tint =
+            let mutable copy = Raylib.ImageCopy image
+            Raylib.ImageColorTint(&copy, tint)
+            copy
+
+        let enemy = Raylib.LoadImage("Content/enemy.png")
+        let enemy_sprites = [|
+            Sprite.fromTexture(Raylib.LoadTextureFromImage(tint enemy Color.White))
+            Sprite.fromTexture(Raylib.LoadTextureFromImage(tint enemy Color.Red  ))
+            Sprite.fromTexture(Raylib.LoadTextureFromImage(tint enemy Color.Blue ))
+        |]
+        Raylib.UnloadImage(enemy)
 
         let assets = {
             Sprites = {
@@ -33,7 +44,6 @@ module Assets =
                 Missing  = Sprite.fromTexture (texture  1  1 Color.Pink)
                 WhiteBox = Sprite.fromTexture (texture 10 10 Color.White)
                 Arrow    = Sprite.fromTexture (load "Content/arrow.png")
-                Enemy    = Sprite.fromTexture (load "Content/enemy.png")
             }
             Knight = Sheets.create {
                 Default = "Idle"
@@ -48,11 +58,7 @@ module Assets =
                 Default = "Default"
                 Sheets  = Map [
                     "Default" =>
-                        Sheet.create { FrameDuration = (ms 250); IsLoop = true; Sprites = [|
-                            Sprite.fromTexture (texture 10 10 Color.White)
-                            Sprite.fromTexture (texture 10 10 Color.Red)
-                            Sprite.fromTexture (texture 10 10 Color.Blue)
-                        |]
+                        Sheet.create { FrameDuration = (ms 250); IsLoop = true; Sprites = enemy_sprites
                     }
                 ]
             }
