@@ -40,11 +40,6 @@ type Layer =
     | FG2 = 4uy
     | FG1 = 5uy
 
-type Viewport = {
-    Width:  int
-    Height: int
-}
-
 /// A sprite is a selection from a Texture2D
 type Sprite = {
     Texture: Texture2D
