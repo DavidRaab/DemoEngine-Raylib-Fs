@@ -41,8 +41,8 @@ let boxes assets =
     // I implemented some basic object culling, so fps dramatically
     // changes depending on zoom level. Interestingly when everything is shown
     // it had no performance penalty at all. It just improves fps when not
-    // everything is shown. The fps in parenthesis show how many fps are archived
-    // with default zoom level and screen is full of boxes.
+    // everything is shown. The Culling column show how many fps are archived
+    // with default zoom level and when screen is full of boxes.
     //
     //     0 boxes                -> 8600 fps
     //
