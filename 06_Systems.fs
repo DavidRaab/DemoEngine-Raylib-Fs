@@ -35,53 +35,66 @@ module View =
                     pos,pRot+me.Rotation,scale
                 )
 
-    let inline drawTexture transform view =
+    let inline drawTexture transform view (struct (minX,maxX,minY,maxY)) =
         match calculateTransform transform with
             | ValueNone                           -> ()
-            | ValueSome (position,rotation,scale) ->
-                Raylib.DrawTexturePro(
-                    texture  = view.Sprite.Texture,
-                    source   = view.Sprite.SrcRect,
-                    dest     = Rectangle(position, view.Sprite.SrcRect.Width * scale.X * view.Scale.X, view.Sprite.SrcRect.Height * scale.Y * view.Scale.Y),
-                    origin   = view.Origin,
-                    rotation = float32 (rotation + view.Rotation),
-                    tint     = view.Tint
-                )
+            | ValueSome (pos,rotation,scale) ->
+                if pos.X > minX && pos.X < maxX && pos.Y > minY && pos.Y < maxY then
+                    Raylib.DrawTexturePro(
+                        texture  = view.Sprite.Texture,
+                        source   = view.Sprite.SrcRect,
+                        dest     = Rectangle(pos, view.Sprite.SrcRect.Width * scale.X * view.Scale.X, view.Sprite.SrcRect.Height * scale.Y * view.Scale.Y),
+                        origin   = view.Origin,
+                        rotation = float32 (rotation + view.Rotation),
+                        tint     = view.Tint
+                    )
 
     let draw () =
+        // Some simple object culling, just camera center + some offset so objects
+        // that are on the edge of screen don't dissapear when they hit the edge.
+        // But would be a cool Retro effect of early 3D games.
+        let cam  = State.camera.Target
+        let zoom = State.camera.Zoom
+        let viewRect = struct (
+            cam.X - ((320f + 64f) * (1f / zoom)),
+            cam.X + ((320f + 64f) * (1f / zoom)),
+            cam.Y - ((180f + 64f) * (1f / zoom)),
+            cam.Y + ((180f + 64f) * (1f / zoom))
+        )
+
         State.View |> Dic2.iter (true,Layer.BG3) (fun entity v ->
             match Dictionary.get entity State.Transform with
-            | ValueSome t -> drawTexture t v
+            | ValueSome t -> drawTexture t v viewRect
             | ValueNone   -> ()
         )
 
         State.View |> Dic2.iter (true,Layer.BG2) (fun entity v ->
             match Dictionary.get entity State.Transform with
-            | ValueSome t -> drawTexture t v
+            | ValueSome t -> drawTexture t v viewRect
             | ValueNone   -> ()
         )
 
         State.View |> Dic2.iter (true,Layer.BG1) (fun entity v ->
             match Dictionary.get entity State.Transform with
-            | ValueSome t -> drawTexture t v
+            | ValueSome t -> drawTexture t v viewRect
             | ValueNone   -> ()
         )
 
         State.View |> Dic2.iter (true,Layer.FG3) (fun entity v ->
             match Dictionary.get entity State.Transform with
-            | ValueSome t -> drawTexture t v
+            | ValueSome t -> drawTexture t v viewRect
             | ValueNone   -> ()
         )
 
         State.View |> Dic2.iter (true,Layer.FG2) (fun entity v ->
             match Dictionary.get entity State.Transform with
-            | ValueSome t -> drawTexture t v
+            | ValueSome t -> drawTexture t v viewRect
             | ValueNone   -> ()
         )
 
         State.View |> Dic2.iter (true,Layer.FG1) (fun entity v ->
             match Dictionary.get entity State.Transform with
-            | ValueSome t -> drawTexture t v
+            | ValueSome t -> drawTexture t v viewRect
             | ValueNone   -> ()
         )
 

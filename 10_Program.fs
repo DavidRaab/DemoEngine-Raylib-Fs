@@ -38,36 +38,37 @@ let boxes assets =
     )
 
     let boxes = ResizeArray<_>()
+    // I implemented some basic object culling, so fps dramatically
+    // changes depending on zoom level. Interestingly when everything is shown
+    // it had no performance penalty at all. It just improves fps when not
+    // everything is shown. The fps in parenthesis show how many fps are archived
+    // with default zoom level and screen is full of boxes.
+    //
     //     0 boxes                -> 12500 fps
     //
-    //  3000 boxes without parent -> 2100 fps
-    //  4000 boxes without parent -> 1600 fps
-    //  5000 boxes without parent -> 1300 fps
-    //  6000 boxes without parent -> 1120 fps
-    // 10000 boxes without parent ->  690 fps
-    // 40000 boxes without parent ->  180 fps
-    // 90000 boxes without parent ->   90 fps
-    //
-    //  3000 boxes with parent    -> 1700 fps
-    //  4000 boxes with parent    -> 1300 fps
-    //  5000 boxes with parent    -> 1050 fps
-    //  6000 boxes with parent    ->  900 fps
-    // 10000 boxes with parent    ->  550 fps
-    // 40000 boxes with parent    ->  130 fps
-    //    - has stutter because every second i traverse through each box and set
-    //      a new random direction. This should be optimally run on a separate thead
-    //      and not the main thread. without this logic no stutter at all
-    // 90000 boxes with parent    ->   60 fps
+    //                                All     | Culling
+    //                               ---------+----------
+    //  3000 boxes without parent -> 2050 fps | 2700 fps
+    //  6000 boxes without parent -> 1120 fps | 1950 fps
+    // 10000 boxes without parent ->  690 fps | 1550 fps
+    // 40000 boxes without parent ->  180 fps |  900 fps
+    // 90000 boxes without parent ->   90 fps |  450 fps
+    //                                        |
+    //  3000 boxes with parent    -> 1700 fps | 2500 fps
+    //  6000 boxes with parent    ->  900 fps | 1300 fps
+    // 10000 boxes with parent    ->  550 fps |  800 fps
+    // 40000 boxes with parent    ->  130 fps |  300 fps
+    // 90000 boxes with parent    ->   60 fps |  190 fps
     //
     // Create 3600 Boxes as child of boxesOrigin (1450 fps)
     for x=1 to 100 do
-        for y=1 to 30 do
+        for y=1 to 100 do
             boxes.Add (Entity.init (fun box ->
-                box.addTransform       (
+                box.addTransform (
                     Transform.fromPosition (float32 x * 11f) (float32 y * 11f)
                     // this cost a lot of performance because rotation/position/scale of all 3.000 boxes
                     // must be computed with a matrix calculated of the parent.
-                    |> Transform.withParent (ValueSome boxesOrigin)
+                    // |> Transform.withParent (ValueSome boxesOrigin)
                 )
                 box.addView Layer.BG2 (View.fromSprite Center assets.Sprites.Enemy)
                 // box.addAnimation (Animation.create assets.Box)
@@ -78,13 +79,22 @@ let boxes assets =
             ))
 
     // let all boxes move
+    // With 40,000 boxes it caused stutter. Because every second i iterated through
+    // all 40,000 boxes and gave them a new direction and this takes some time. So
+    // instead of updating all i just update some boxes every call. So work is split
+    // across several frames.
+    // Another option would be to put the work on another Thread that don't block
+    // the main Thread.
     let rng = System.Random ()
-    Systems.Timer.addTimer (Timer.every (sec 1.0) () (fun state dt ->
-        // changes direction and rotation of every box every second to a
-        // new random direction/rotation
-        for box in boxes do
+    Systems.Timer.addTimer (Timer.every (sec 0.1) 0 (fun idx dt ->
+        // changes direction and rotation of 200 boxes every call to a new random direction/rotation
+        let updatesPerCall = 200
+        let last = boxes.Count - 1
+        let max = if idx+updatesPerCall > last then last else idx+updatesPerCall
+        for i=idx to max do
             // 10% of all boxes will move to world position 0,0 with 10px per second
             // all other boxes move in a random direction at 25px per second
+            let box = boxes.[i]
             State.Movement |> Dictionary.add box {
                 Direction = ValueSome(
                     if   rng.NextSingle() < 0.1f
@@ -93,7 +103,9 @@ let boxes assets =
                 )
                 Rotation = ValueSome(rng.NextSingle() * 60f<deg> - 30f<deg>)
             }
-        State ()
+        if max = last
+        then State 0
+        else State max
     ))
 
     // only show every second box - 3000 out of 6000
@@ -479,10 +491,13 @@ let update (model:Model) (deltaTime:float32) =
     let inline isDown key : bool    = CBool.op_Implicit(Raylib.IsKeyDown(key))
     let inline addPos (pos:Vector2) = State.camera.Target <- (State.camera.Target + (pos * deltaTime))
 
-    if isDown KeyboardKey.W    then addPos (Vector2.Up    * 100f)
-    if isDown KeyboardKey.A    then addPos (Vector2.Left  * 100f)
-    if isDown KeyboardKey.S    then addPos (Vector2.Down  * 100f)
-    if isDown KeyboardKey.D    then addPos (Vector2.Right * 100f)
+    if isDown KeyboardKey.W    then addPos (Vector2.Up    * 150f)
+    if isDown KeyboardKey.A    then addPos (Vector2.Left  * 150f)
+    if isDown KeyboardKey.S    then addPos (Vector2.Down  * 150f)
+    if isDown KeyboardKey.D    then addPos (Vector2.Right * 150f)
+    if isDown KeyboardKey.Z    then State.camera.Zoom   <- 1f
+    if isDown KeyboardKey.R    then State.camera.Zoom   <- min   3f (State.camera.Zoom + (1f * deltaTime))
+    if isDown KeyboardKey.F    then State.camera.Zoom   <- max 0.1f (State.camera.Zoom - (1f * deltaTime))
     if isDown KeyboardKey.Home then State.camera.Target <- Vector2(0f,0f)
 
     // Get current keyboard/GamePad state and add it to our KeyBoard/GamePad module
