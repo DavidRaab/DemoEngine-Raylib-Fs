@@ -38,7 +38,7 @@ parent object.
 # Benchmarks
 
 |                            |   All     | Culling
-|----------------------------------------+----------
+| :------------------------- | --------: | -------:
 |  3000 boxes without parent | 2050 fps  | 2700 fps
 |  6000 boxes without parent | 1120 fps  | 1950 fps
 | 10000 boxes without parent |  690 fps  | 1550 fps
