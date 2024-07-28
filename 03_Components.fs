@@ -6,19 +6,21 @@ open MyGame.DataTypes
 
 (* Design Philosophy
 
-Functions that mutate a record must return `unit`. This way it is easy to distinguish functions
-that return a new record without mutating anything.
+1. Functions that mutate a record must return `unit`.
 
-An exception to this rule are function that begin with `set` usually to explicitly mutate
-a property. These functions must mutate the entry (to be consistent) and still return
-the original mutated record. This way Function piping can be used, and it is still obvious
-that an record gets mutated.
+This makes it obvious that a record is being mutated. But best is to avoid
+creating mutating functions. I anyway don't expect to write a getter/setter for
+every field. Just use the default F# way to access or set a field. Its a
+built-in language feature, so use it. Same goes for immutable records with
+new fields. Use the record `with` syntax.
 
-So there are three cases of functions
+Avoid writing mutating functions doesn't mean to avoid mutation. It just means
+there is no need for a function that just assigns a value to a mutable field.
+Just write `t.Field <- whatever`. There is no need for having a function that
+does this.
 
-1. function:    record -> unit   // Mutates record
-2. function:    record -> record // Returns a new record without mutating any field
-3  setFunction: record -> record // Mutates the record and returns the record
+Only write functions when they add anything useful. This means some kind of
+input type conversation/transformation or providing some defaults.
 *)
 
 module Rad =
@@ -126,9 +128,8 @@ module Comp =
     }
 
     /// set rotation on a transform by transforming the Vector2 to a rotation
-    let inline setRotationVector vector (t:Transform) : Transform =
+    let inline setRotationVector vector (t:Transform) : unit =
         t.Rotation <- Rad.toDeg (Vector2.angle vector)
-        t
 
     /// Adds rotation to Transform specified in radiant
     let inline addRotation rotation (t:Transform) : unit =
@@ -202,7 +203,7 @@ module Comp =
             Origin   = originToVector2 (float32 sprite.SrcRect.Width) (float32 sprite.SrcRect.Height) origin
         }
 
-    let resetAnimation (animation:Animation) =
+    let resetAnimation (animation:Animation) : unit =
         animation.CurrentSprite <- 0
         animation.ElapsedTime   <- TimeSpan.Zero
 
