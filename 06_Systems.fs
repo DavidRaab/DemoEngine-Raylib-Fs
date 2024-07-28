@@ -156,9 +156,12 @@ module Animations =
             anim.ElapsedTime <- anim.ElapsedTime + deltaTime
             if anim.ElapsedTime > anim.CurrentSheet.FrameDuration then
                 anim.ElapsedTime <- anim.ElapsedTime - anim.CurrentSheet.FrameDuration
-                Animation.nextSprite anim
+                Comp.setAnimationNextSprite anim
                 match Dic2.get entity State.View with
-                | ValueSome (_,view) -> Animation.updateView view anim
+                | ValueSome (_,view) ->
+                    match Comp.getCurrentSpriteAnimation anim with
+                    | ValueSome sprite -> view.Sprite <- sprite
+                    | ValueNone        -> ()
                 | ValueNone          -> ()
 
 

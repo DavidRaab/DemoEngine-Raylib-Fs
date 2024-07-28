@@ -58,8 +58,8 @@ let boxes assets =
                     // must be computed with a matrix calculated of the parent.
                     // |> Transform.withParent (ValueSome boxesOrigin)
                 )
-                box.addView Layer.BG2 (Sheets.createView Center assets.Box)
-                box.addAnimation (Animation.create assets.Box)
+                box.addView Layer.BG2 (Comp.createViewFromSheets Center assets.Box)
+                box.addAnimation (Comp.createAnimationFromSheets assets.Box)
                 box.addMovement {
                     Direction = ValueNone //ValueSome (Relative (Vector2.Right * 25f))
                     Rotation  = ValueSome (90f<deg>)
@@ -153,10 +153,10 @@ let initModel assets =
     let knight = Entity.init (fun e ->
         e.addTransform (Comp.createTransformXY 0f 0f)
         e.addView Layer.FG1 ({
-            Sheets.createView Top assets.Knight
+            Comp.createViewFromSheets Top assets.Knight
             with Scale = (Vector2.create 2f 2f)
         })
-        e.addAnimation (Animation.create assets.Knight)
+        e.addAnimation (Comp.createAnimationFromSheets assets.Knight)
     )
 
     // Creates a box that is a parent of the knight and moves when Knight moves
@@ -323,7 +323,7 @@ let update (model:Model) (deltaTime:float32) =
     let nextKnightState previousState =
         // helper-function that describes how an action is mapped to a knightState
         let action2state = function
-            | Attack      -> IsAttack (0f, Sheet.durationF (model.Knight.getSheetExn "Attack"))
+            | Attack      -> IsAttack (0f, Comp.getSheetDurationF (model.Knight.getSheetExn "Attack"))
             | MoveLeft  v -> IsLeft v
             | MoveRight v -> IsRight v
             | Crouch      -> IsCrouch

@@ -43,7 +43,7 @@ module EntityExtension =
         member entity.deleteView ()      = Dic2.remove entity State.View
         member entity.setAnimation name =
             match Dictionary.get entity State.Animation with
-            | ValueSome anim -> Animation.switchAnimation name anim
+            | ValueSome anim -> Comp.switchAnimation name anim
             | ValueNone      -> ()
 
         member entity.getSheetExn name : Sheet =

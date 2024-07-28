@@ -45,32 +45,32 @@ module Assets =
                 WhiteBox = Comp.createSpriteTexture (texture 10 10 Color.White)
                 Arrow    = Comp.createSpriteTexture (load "Content/arrow.png")
             }
-            Knight = Sheets.create {
+            Knight = Comp.createSheets {
                 Default = "Idle"
                 Sheets  = Map [
-                    "Idle"   => Sheet.create {
+                    "Idle"   => Comp.createSheet {
                         FrameDuration = (ms 100); IsLoop =  true;
                         Sprites = (Comp.createSpritesfromColumnsRows 10 1 (load "Content/FreeKnight/Idle.png"))
                     }
-                    "Attack" => Sheet.create {
+                    "Attack" => Comp.createSheet {
                         FrameDuration =  (ms 50); IsLoop = false;
                         Sprites = (Comp.createSpritesfromColumnsRows  4 1 (load "Content/FreeKnight/Attack.png"))
                     }
-                    "Run"    => Sheet.create {
+                    "Run"    => Comp.createSheet {
                         FrameDuration = (ms 100); IsLoop =  true;
                         Sprites = (Comp.createSpritesfromColumnsRows 10 1 (load "Content/FreeKnight/Run.png"))
                     }
-                    "Crouch" => Sheet.create {
+                    "Crouch" => Comp.createSheet {
                         FrameDuration =   (ms 0); IsLoop = false;
                         Sprites = [| Comp.createSpriteTexture             (load "Content/FreeKnight/Crouch.png") |]
                     }
                 ]
             }
-            Box = Sheets.create {
+            Box = Comp.createSheets {
                 Default = "Default"
                 Sheets  = Map [
                     "Default" =>
-                        Sheet.create { FrameDuration = (ms 250); IsLoop = true; Sprites = enemy_sprites
+                        Comp.createSheet { FrameDuration = (ms 250); IsLoop = true; Sprites = enemy_sprites
                     }
                 ]
             }

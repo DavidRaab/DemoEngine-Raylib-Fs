@@ -70,8 +70,16 @@ module Comp =
     let createTransform (st:Transform) : Transform = st
     let createView      (st:View)      : View      = st
     let createSprite    (st:Sprite)    : Sprite    = st
-    let createSheet     (st:Sheet)     : Sheet     = st
-    let createSheets    (st:Sheets)    : Sheets    = st
+    let createSheet     (st:Sheet)     : Sheet     =
+        if st.Sprites.Length = 0 then
+            failwithf "Cannot create Sheet. Must at least contain one Sprite."
+        st
+    let createSheets    (st:Sheets)    : Sheets =
+        if not (Map.containsKey st.Default st.Sheets) then
+            failwithf "Cannot create Sheets. Default Sheet '%s' does not exists." st.Default
+        if st.Sheets.Count = 0 then
+            failwithf "Cannot create Sheets. Sheets must have at least one item."
+        st
     let createAnimation (st:Animation) : Animation = st
     let createMovement  (st:Movement)  : Movement  = st
 
@@ -108,6 +116,13 @@ module Comp =
         Rotation  = 0.0f<deg>
         Origin    = Vector2.Zero
         Scale     = Vector2.One
+    }
+
+    let createAnimationFromSheets sheets = createAnimation {
+        Sheets        = sheets
+        CurrentSheet  = sheets.Sheets.[sheets.Default] // can throw exception
+        CurrentSprite = 0
+        ElapsedTime   = TimeSpan.Zero
     }
 
     /// set rotation on a transform by transforming the Vector2 to a rotation
@@ -149,37 +164,23 @@ module Comp =
         let origin = originToVector2 width height name
         { view with Origin = origin }
 
-module Sheet =
-    let create data : Sheet =
-        if data.Sprites.Length = 0 then
-            failwithf "Cannot create Sheet. Must at least contain one Sprite."
-        data
-
-    let sprite idx (sheet:Sheet) : Sprite voption =
+    let getSheetSprite idx (sheet:Sheet) : Sprite voption =
         if idx < sheet.Sprites.Length
         then ValueSome sheet.Sprites.[idx]
         else ValueNone
 
-    let inline length (sheet:Sheet) : int =
+    let inline getSheetLength (sheet:Sheet) : int =
         sheet.Sprites.Length
 
-    let inline duration (sheet:Sheet) =
+    let inline getSheetDuration (sheet:Sheet) =
         sheet.FrameDuration * (float sheet.Sprites.Length)
 
     /// Sheet.duration but in float32
-    let inline durationF (sheet:Sheet) =
-        let ts = duration sheet
+    let inline getSheetDurationF (sheet:Sheet) =
+        let ts = getSheetDuration sheet
         float32 (ts.TotalSeconds)
 
-module Sheets =
-    let create data : Sheets =
-        if not (Map.containsKey data.Default data.Sheets) then
-            failwithf "Cannot create Sheets. Default Sheet '%s' does not exists." data.Default
-        if data.Sheets.Count = 0 then
-            failwithf "Cannot create Sheets. Sheets must have at least one item."
-        data
-
-    let addSheet name (sheet: Sheet) sheets : Sheets = {
+    let addSheetToSheets name (sheet: Sheet) sheets : Sheets = {
         sheets with
             Sheets = (Map.add name sheet sheets.Sheets)
     }
@@ -191,109 +192,37 @@ module Sheets =
         Map.find name sheets.Sheets
 
     /// Creates a View from the currently set sprite sheet
-    let createView origin (sheets:Sheets) : View =
+    let createViewFromSheets origin (sheets:Sheets) : View =
         let sprite = sheets.Sheets.[sheets.Default].Sprites.[0]
-        Comp.createView {
+        createView {
             Sprite   = sprite
             Rotation = 0f<deg>
             Tint     = Color.White
             Scale    = Vector2.One
-            Origin   = Comp.originToVector2 (float32 sprite.SrcRect.Width) (float32 sprite.SrcRect.Height) origin
+            Origin   = originToVector2 (float32 sprite.SrcRect.Width) (float32 sprite.SrcRect.Height) origin
         }
 
-// module Sheet =
-//     /// Returns a sprite from a sheet
-//     let sprite index sheet =
-//         Array.tryItem index sheet.Sprites |> Option.defaultWith (fun _ ->
-//             eprintfn "Index [%d] out of Range. Max index is [%d] at\n%s"
-//                 index (sheet.Sprites.Length-1) (stackTrace 1)
-//             if   sheet.Sprites.Length > 0
-//             then Array.get sheet.Sprites 0
-//             else failwith "Sheet has 0 Sprites"
-//         )
-
-//     let fromWidthHeight width height (texture:Texture2D) =
-//         let columns = texture.Width  / width
-//         let rows    = texture.Height / height
-//         let sprites = [|
-//             for row=0 to rows-1 do
-//             for col=0 to columns-1 do
-//                 yield Sprite.create texture (Rectangle(col*width, row*height, width, height))
-//         |]
-//         if sprites.Length = 0 then
-//             failwith "Sheet with 0 Sprites"
-//         { Sprites = sprites }
-
-//     let fromColumnsRows columns rows (texture:Texture2D) =
-//         let width   = texture.Width  / columns
-//         let height  = texture.Height / rows
-//         let sprites = [|
-//             for row=0 to rows-1 do
-//             for col=0 to columns-1 do
-//                 yield Sprite.create texture (Rectangle(col*width, row*height, width, height))
-//         |]
-//         if sprites.Length = 0 then
-//             failwith "Sheet with 0 Sprites"
-//         { Sprites = sprites }
-
-//     /// Generates a new Sheet from an existing Sheet by selecting the sprites specified by `idxs`
-//     let fromSheet idxs sheet = {
-//         Sprites = [|
-//             for idx in idxs do
-//                 yield sprite idx sheet
-//         |]
-//     }
-
-//     /// Generates a Sheet from a single texture that will contain a single sprite
-//     let fromTexture (texture:Texture2D) = {
-//         Sprites = [|
-//             Sprite.create texture (Rectangle(0,0,texture.Width, texture.Height))
-//         |]
-//     }
-
-//     /// Generates a Sheet by directly passing the individual sprites
-//     let fromSprites sprites = {
-//         Sprites = Array.ofSeq sprites
-//     }
-
-
-module Animation =
-    let from (data:Animation) = data
-
-    let create sheets = from {
-        Sheets        = sheets
-        CurrentSheet  = sheets.Sheets.[sheets.Default] // can throw exception
-        CurrentSprite = 0
-        ElapsedTime   = TimeSpan.Zero
-    }
-
-    let sheets (animation:Animation) : Sheets = animation.Sheets
-
-    let reset (animation:Animation) : unit =
+    let resetAnimation (animation:Animation) =
         animation.CurrentSprite <- 0
         animation.ElapsedTime   <- TimeSpan.Zero
 
     /// Returns the current Sprite in an animation
-    let inline currentSprite anim : Sprite voption =
-        Sheet.sprite anim.CurrentSprite anim.CurrentSheet
+    let inline getCurrentSpriteAnimation anim : Sprite voption =
+        getSheetSprite anim.CurrentSprite anim.CurrentSheet
 
     /// Advance the animation to the next Sprite
-    let nextSprite (anim:Animation) : unit =
+    let setAnimationNextSprite (anim:Animation) : unit =
         let sheet     = anim.CurrentSheet
-        let maxSprite = Sheet.length sheet
+        let maxSprite = getSheetLength sheet
         if sheet.IsLoop then
             anim.CurrentSprite <- (anim.CurrentSprite + 1) % maxSprite
         else
             if anim.CurrentSprite < maxSprite-1 then
                 anim.CurrentSprite <- anim.CurrentSprite + 1
 
-    /// Updates the View to the current Sprite
-    let inline updateView (view:View) (anim:Animation) : unit =
-        view.Sprite <- anim.CurrentSheet.Sprites.[anim.CurrentSprite]
-
     /// Switch to another sheet animation
     let switchAnimation name (anim:Animation) : unit =
-        match Sheets.getSheet name anim.Sheets with
+        match getSheet name anim.Sheets with
         | Some sheet ->
             anim.CurrentSheet  <- sheet
             anim.CurrentSprite <- 0
@@ -302,35 +231,34 @@ module Animation =
             let validAnims = System.String.Join(',', Map.keys anim.Sheets.Sheets)
             failwithf "Cannot switch Animation to \"%s\" valid animation are %s" name validAnims
 
-module Movement =
-    let inline from (x:Movement) = x
-
-    let inline create dir rot : Movement = {
-        Direction = ValueSome dir
-        Rotation  = ValueSome rot
-    }
-
-    let empty = {
-        Direction = ValueNone
+    let createMovementDirection dir = createMovement {
+        Direction = (ValueSome (Relative dir));
         Rotation  = ValueNone
     }
 
-    /// creates a movement containing a direction
-    let inline fromDirection dir = from { Direction = (ValueSome (Relative dir)); Rotation = ValueNone }
-    /// creates a movement containing a rotation
-    let inline fromRotation  rot = from { Direction = ValueNone; Rotation = (ValueSome rot) }
+    let createMovementRotation rot = createMovement {
+        Direction = ValueNone
+        Rotation  = (ValueSome rot)
+    }
 
-    /// create a movement that moves to position
-    let moveTo position speed = from {
+    let createMovementTo (position:Vector2) speed = createMovement {
         Direction = (ValueSome (Absolute (position,speed)))
         Rotation  =  ValueNone
     }
 
-    /// get .Direction of Component
-    let inline direction (m:Movement) = m.Direction
-    /// get .Rotation of Component
-    let inline rotation  (m:Movement) = m.Rotation
-
-    let withDirection         dir (mov:Movement) = { mov with Direction = ValueSome (Relative dir) }
-    let withPosition          pos (mov:Movement) = { mov with Direction = ValueSome (Absolute pos) }
-    let withRotationPerSecond rot (mov:Movement) = { mov with Rotation  = ValueSome rot            }
+    let createSpritesFromWidthHeight width height (texture:Texture2D) : Sprite array =
+        let columns = texture.Width  / width
+        let rows    = texture.Height / height
+        let (width, height) = float32 width, float32 height
+        let sprites = [|
+            for row=0 to rows-1 do
+            for col=0 to columns-1 do
+                let row, col = float32 row, float32 col
+                yield createSprite {
+                    Texture = texture
+                    SrcRect = Rectangle(col*width, row*height, width, height)
+                }
+        |]
+        if sprites.Length = 0 then
+            failwith "Sheet with 0 Sprites"
+        sprites
