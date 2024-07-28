@@ -1,237 +1,30 @@
 namespace MyGame.Utility
 open Raylib_cs
 open System.Numerics
-open MyGame.Extensions
-open MyGame.DataTypes
-open MyGame.Components
+open MyGame.State
 
 type String   = System.String
 type TimeSpan = System.TimeSpan
-type Key      = KeyboardKey
 
-(*
-type FKeyboardState() =
-    let state = System.Collections.BitArray(512)
-    member this.SetKey (key:Key) =
-        state.Set(int key, true)
-    member this.GetKey (key:Key) =
-        state.Get(int key)
-    member this.SetKeys () =
-        let mutable key = Raylib.GetKeyPressed ()
-        while key <> 0 do
-            state.Set(key, true)
-            key <- Raylib.GetKeyPressed()
-    member this.IsKeyDown(key:Key) =
-        state.Get(int key) = true
-    member this.IsKeyUp(key:Key) =
-        state.Get(int key) = false
-
-module FKeyboard =
-    let mutable previousState = FKeyboardState()
-    let mutable currentState  = FKeyboardState()
-
-    let addKeys () =
-        currentState.SetKeys ()
-
-    let nextState () =
-        previousState <- currentState
-        currentState  <- FKeyboardState()
-
-    /// returns true only in the first frame the key was pressed.
-    /// Key must be released again to become true again
-    let isPressed key =
-        previousState.IsKeyUp key && currentState.IsKeyDown key
-
-    /// returns true only in the first frame the key was released
-    /// Key must be pressed again to become true again
-    let isReleased key =
-        previousState.IsKeyDown key && currentState.IsKeyUp key
-
-    let isKeyDown key =
-        currentState.GetKey key
-
-    let isKeyUp key =
-        currentState.IsKeyUp key
-
-type FGamePadButton =
-    | A             = 0
-    | B             = 1
-    | X             = 2
-    | Y             = 3
-    | LeftShoulder  = 4
-    | RightShoulder = 5
-    | LeftStick     = 6
-    | RightStick    = 7
-    | DPadLeft      = 8
-    | DPadUp        = 9
-    | DPadRight     = 10
-    | DPadDown      = 11
-    | Back          = 12
-    | BigButton     = 13
-    | Start         = 14
-
-type FGamePadState() =
-    let state                = System.Collections.BitArray(15)
-    let mutable triggerLeft  = 0f
-    let mutable triggerRight = 0f
-    let mutable stickLeft    = Vector2.Zero
-    let mutable stickRight   = Vector2.Zero
-
-    member this.SetButton (button:FGamePadButton) =
-        state.Set(int button, true)
-    member this.GetButton (button:FGamePadButton) =
-        state.Get(int button)
-    member this.AddGamePadState () =
-        // Map MonoGame Buttons to own State
-        let buttonMapping buttons =
-            for (mb:GamepadButton,fb) in buttons do
-                if CBool.op_Implicit(Raylib.IsGamepadButtonDown(0, mb)) then this.SetButton(fb)
-
-        buttonMapping [
-            GamepadButton.RightFaceDown,  FGamePadButton.A
-            GamepadButton.RightFaceRight, FGamePadButton.B
-            GamepadButton.RightFaceLeft,  FGamePadButton.X
-            GamepadButton.RightFaceUp,    FGamePadButton.Y
-            GamepadButton.LeftTrigger1,   FGamePadButton.LeftShoulder
-            GamepadButton.RightTrigger1,  FGamePadButton.RightShoulder
-            GamepadButton.LeftTrigger1,   FGamePadButton.LeftStick
-            GamepadButton.RightTrigger2,  FGamePadButton.RightStick
-            GamepadButton.MiddleLeft,     FGamePadButton.Back
-            GamepadButton.Middle,         FGamePadButton.BigButton
-            GamepadButton.MiddleRight,    FGamePadButton.Start
-            GamepadButton.LeftFaceDown,   FGamePadButton.DPadLeft
-            GamepadButton.LeftFaceUp,     FGamePadButton.DPadUp
-            GamepadButton.LeftFaceRight,  FGamePadButton.DPadRight
-            GamepadButton.LeftFaceLeft,   FGamePadButton.DPadRight
-        ]
-
-        // Keep Track of the highest value
-        triggerLeft  <- max triggerLeft  (Raylib.GetGamepadAxisMovement(0, GamepadAxis.LeftTrigger))
-        triggerRight <- max triggerRight (Raylib.GetGamepadAxisMovement(0, GamepadAxis.RightTrigger))
-
-        // Save last Thumbstick values
-        stickLeft  <- Vector2(
-            Raylib.GetGamepadAxisMovement(0, GamepadAxis.LeftX),
-            Raylib.GetGamepadAxisMovement(0, GamepadAxis.LeftY)
-        )
-        stickRight <- Vector2(
-            Raylib.GetGamepadAxisMovement(0, GamepadAxis.RightX),
-            Raylib.GetGamepadAxisMovement(0, GamepadAxis.RightY)
-        )
-
-    member this.TriggerLeft  = triggerLeft
-    member this.TriggerRight = triggerRight
-    member this.StickLeft    = stickLeft
-    member this.StickRight   = stickRight
-
-    member this.IsKeyUp button =
-        state.Get(int button) = false
-    member this.IsKeyDown button =
-        state.Get(int button) = true
-
-module FGamePad =
-    let mutable previousState = FGamePadState()
-    let mutable currentState  = FGamePadState()
-
-    let addState () =
-        currentState.AddGamePadState ()
-
-    let nextState () =
-        previousState <- currentState
-        currentState  <- FGamePadState()
-
-    /// `true` only in the exact frame this button is pressed
-    let isPressed button =
-        previousState.IsKeyUp button && currentState.IsKeyDown button
-
-    /// `true` only in the frame the button is released
-    let isReleased button =
-        previousState.IsKeyDown button && currentState.IsKeyUp button
-
-    let isKeyDown button =
-        currentState.IsKeyDown button
-
-    let isKeyUp button =
-        currentState.IsKeyUp button
-
-    let stickLeft    () = currentState.StickLeft
-    let stickRight   () = currentState.StickRight
-    let triggerLeft  () = currentState.TriggerLeft
-    let triggerRight () = currentState.TriggerRight
-
-type MouseButton =
-    | Left     = 0
-    | Middle   = 1
-    | Right    = 2
-    | XButton1 = 3
-    | XButton2 = 4
-
-type FMouseState() =
-    let state                         = System.Collections.BitArray(5)
-    let mutable position              = Vector2(0f,0f)
-    let mutable scrollWheel           = 0f
-
-    member this.SetButton(button:MouseButton) =
-        state.Set(int button,true)
-    member this.GetButton(button:MouseButton) =
-        state.Get(int button)
-    member this.AddMouseState () =
-        // Map Mouse Button to BitArray
-        let mapButtons buttons =
-            for (mb,fb) in buttons do
-                if CBool.op_Implicit <| Raylib.IsMouseButtonDown(mb) then
-                    this.SetButton(fb)
-        mapButtons [
-            Raylib_cs.MouseButton.Left,   MouseButton.Left
-            Raylib_cs.MouseButton.Middle, MouseButton.Middle
-            Raylib_cs.MouseButton.Right,  MouseButton.Right
-            Raylib_cs.MouseButton.Back,   MouseButton.XButton1
-            Raylib_cs.MouseButton.Extra,  MouseButton.XButton2
-        ]
-
-        // Apply Viewport Offset or otherwise everything is fucked up
-        // position              <- Point(ms.X - camera.Viewport.X, ms.Y - camera.Viewport.Y)
-        position              <- Raylib.GetMousePosition()
-        scrollWheel           <- Raylib.GetMouseWheelMove()
-
-    member this.Position = position
-    member this.ScrollWheel
-        with get () = scrollWheel
-        and  set  x = scrollWheel <- x
-
-    member this.IsKeyDown button =
-        this.GetButton(button) = true
-    member this.IsKeyUp button =
-        this.GetButton(button) = false
-
-module FMouse =
-    let mutable previousState = FMouseState()
-    let mutable currentState  = FMouseState()
-
-    let addState mouseState =
-        currentState.AddMouseState ()
-
-    let nextState () =
-        previousState                      <- currentState
-        currentState                       <- FMouseState ()
-        currentState.ScrollWheel           <- previousState.ScrollWheel
-
-    /// `true` only in the exact frame the button was pressed
-    let isPressed button =
-        previousState.IsKeyUp button && currentState.IsKeyDown button
-
-    /// `true` only in the exact frame the button is released
-    let isReleased button =
-        previousState.IsKeyDown button && currentState.IsKeyUp button
-
-    let isKeyDown button =
-        currentState.IsKeyDown button
-
-    let isKeyUp button =
-        currentState.IsKeyUp button
-
-    let position    () : Vector2 = currentState.Position
-    let scrollWheel () : float32 = currentState.ScrollWheel - previousState.ScrollWheel
+type Key     = KeyboardKey
+type GamePad =
+    | ButtonUp      = 0
+    | ButtonRight   = 1
+    | ButtonDown    = 2
+    | ButtonLeft    = 3
+    | LeftTrigger1  = 4
+    | LeftTrigger2  = 5
+    | RightTrigger1 = 6
+    | RightTrigger2 = 7
+    | LeftStick     = 8
+    | RightStick    = 9
+    | DPadUp        = 10
+    | DPadRight     = 11
+    | DPadDown      = 12
+    | DPadLeft      = 13
+    | Select        = 14
+    | BigButton     = 15
+    | Start         = 16
 
 // Input Module
 type ButtonState =
@@ -251,7 +44,7 @@ type GamePadTriggers<'Action> = {
 }
 
 type InputGamePad<'Action> = {
-    Buttons:    list<FGamePadButton * ButtonState * 'Action>
+    Buttons:    list<GamePad * ButtonState * 'Action>
     ThumbStick: GamePadThumbStick<'Action>
     Trigger:    GamePadTriggers<'Action>
 }
@@ -260,80 +53,128 @@ type FMouseAction<'Action> =
     | Screen of (Vector2 -> 'Action)
     | World  of (Vector2 -> 'Action)
 
+type MouseButton =
+    | Left     = 0
+    | Middle   = 1
+    | Right    = 2
+    | XButton1 = 3
+    | XButton2 = 4
+
 type InputMouse<'Action> = {
-    Buttons:               list<MouseButton * ButtonState * FMouseAction<'Action>>
-    ScrollWheel:           option<float32 -> 'Action>
-    Position:              option<Vector2 -> 'Action>
+    Buttons:     list<MouseButton * ButtonState * FMouseAction<'Action>>
+    ScrollWheel: option<float32 -> 'Action>
+    Position:    option<Vector2 -> 'Action>
 }
 
 type Input<'Action> = {
-    Keyboard:   list<Key * ButtonState * 'Action>
-    GamePad:    InputGamePad<'Action>
-    Mouse:      InputMouse<'Action>
+    Keyboard: list<Key * ButtonState * 'Action>
+    GamePad:  InputGamePad<'Action>
+    Mouse:    InputMouse<'Action>
 }
 
-module FInput =
-    let mapInput camera definition =
+module Input =
+    let inline cb (b:CBool) : bool = CBool.op_Implicit b
+
+    let gamepadToRaylib gamepad =
+        match gamepad with
+        | GamePad.ButtonUp      -> GamepadButton.RightFaceUp
+        | GamePad.ButtonRight   -> GamepadButton.RightFaceRight
+        | GamePad.ButtonDown    -> GamepadButton.RightFaceDown
+        | GamePad.ButtonLeft    -> GamepadButton.RightFaceLeft
+        | GamePad.LeftTrigger1  -> GamepadButton.LeftTrigger1
+        | GamePad.LeftTrigger2  -> GamepadButton.LeftTrigger2
+        | GamePad.RightTrigger1 -> GamepadButton.RightTrigger1
+        | GamePad.RightTrigger2 -> GamepadButton.RightTrigger2
+        | GamePad.LeftStick     -> GamepadButton.LeftThumb
+        | GamePad.RightStick    -> GamepadButton.RightThumb
+        | GamePad.DPadUp        -> GamepadButton.LeftFaceUp
+        | GamePad.DPadRight     -> GamepadButton.LeftFaceRight
+        | GamePad.DPadDown      -> GamepadButton.LeftFaceDown
+        | GamePad.DPadLeft      -> GamepadButton.LeftFaceLeft
+        | GamePad.Select        -> GamepadButton.MiddleLeft
+        | GamePad.BigButton     -> GamepadButton.Middle
+        | GamePad.Start         -> GamepadButton.MiddleRight
+        | _                     -> failwith "Missing GamePad mapping to Raylib"
+
+    let mouseToRaylib mouse : Raylib_cs.MouseButton =
+        match mouse with
+        | MouseButton.Left     -> Raylib_cs.MouseButton.Left
+        | MouseButton.Middle   -> Raylib_cs.MouseButton.Middle
+        | MouseButton.Right    -> Raylib_cs.MouseButton.Right
+        | MouseButton.XButton1 -> Raylib_cs.MouseButton.Back
+        | MouseButton.XButton2 -> Raylib_cs.MouseButton.Side
+        | _                    -> failwith "Missing Mouse Button mapping to Raylib"
+
+    /// Transforms MouseAction to desired WorldSpace or ScreenSpace
+    let mousePos ma =
+        match ma with
+        | World  f -> f (Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), State.camera))
+        | Screen f -> f (Raylib.GetMousePosition())
+
+    let getActions (input:Input<'Action>) =
         let actions = ResizeArray<_>()
 
-        // Keyboard Input Handling
-        for button,state,action in definition.Keyboard do
+        // Process Keyboard inputs
+        for (key,state,action) in input.Keyboard do
             match state with
-            | IsPressed  -> if FKeyboard.isPressed  button then actions.Add action
-            | IsReleased -> if FKeyboard.isReleased button then actions.Add action
-            | IsKeyDown  -> if FKeyboard.isKeyDown  button then actions.Add action
-            | IsKeyUp    -> if FKeyboard.isKeyUp    button then actions.Add action
+                | IsPressed  -> if cb <| Raylib.IsKeyPressed(key)  then actions.Add(action)
+                | IsReleased -> if cb <| Raylib.IsKeyReleased(key) then actions.Add(action)
+                | IsKeyDown  -> if cb <| Raylib.IsKeyDown(key)     then actions.Add(action)
+                | IsKeyUp    -> if cb <| Raylib.IsKeyUp(key)       then actions.Add(action)
 
-        // GamePad Buttons Handling
-        for button,state,action in definition.GamePad.Buttons do
+        // Process GamePad inputs
+        for (button,state,action) in input.GamePad.Buttons do
             match state with
-            | IsPressed  -> if FGamePad.isPressed  button then actions.Add action
-            | IsReleased -> if FGamePad.isReleased button then actions.Add action
-            | IsKeyDown  -> if FGamePad.isKeyDown  button then actions.Add action
-            | IsKeyUp    -> if FGamePad.isKeyUp    button then actions.Add action
+                | IsPressed  -> if cb <| Raylib.IsGamepadButtonPressed( 0, gamepadToRaylib button) then actions.Add(action)
+                | IsReleased -> if cb <| Raylib.IsGamepadButtonReleased(0, gamepadToRaylib button) then actions.Add(action)
+                | IsKeyDown  -> if cb <| Raylib.IsGamepadButtonDown(    0, gamepadToRaylib button) then actions.Add(action)
+                | IsKeyUp    -> if cb <| Raylib.IsGamepadButtonUp(      0, gamepadToRaylib button) then actions.Add(action)
 
-        // GamePad ThumbStick Handling
-        if FGamePad.stickLeft () <> Vector2.Zero then
-            definition.GamePad.ThumbStick.Left |> Option.iter (fun f ->
-                actions.Add (f (Vector2.flipY (FGamePad.stickLeft ())))
-            )
-        if FGamePad.stickRight () <> Vector2.Zero then
-            definition.GamePad.ThumbStick.Right |> Option.iter (fun f ->
-                actions.Add (f (Vector2.flipY (FGamePad.stickRight ())))
-            )
+        // Get Thumbsticks values
+        match input.GamePad.ThumbStick.Left with
+        | Some f ->
+            let x   = Raylib.GetGamepadAxisMovement(0, GamepadAxis.LeftX)
+            let y   = Raylib.GetGamepadAxisMovement(0, GamepadAxis.LeftY)
+            let vec = Vector2(x,y)
+            actions.Add(f vec)
+        | None -> ()
 
-        // GamePad Triggers
-        if FGamePad.triggerLeft () |> notNearly 0.0f 0.0001f then
-            definition.GamePad.Trigger.Left |> Option.iter (fun f ->
-                actions.Add (f (FGamePad.triggerLeft ()))
-            )
-        if FGamePad.triggerRight () |> notNearly 0.0f 0.0001f then
-            definition.GamePad.Trigger.Right |> Option.iter (fun f ->
-                actions.Add (f (FGamePad.triggerRight ()))
-            )
+        match input.GamePad.ThumbStick.Right with
+        | Some f ->
+            let x   = Raylib.GetGamepadAxisMovement(0, GamepadAxis.RightX)
+            let y   = Raylib.GetGamepadAxisMovement(0, GamepadAxis.RightY)
+            let vec = Vector2(x,y)
+            actions.Add(f vec)
+        | None -> ()
 
-        // Mouse Handling
-        let mouseAction action =
-            match action with
-            | Screen f -> f (FMouse.position ())
-            | World  f -> f (Camera.screenToWorld (FMouse.position ()) camera)
+        // Get Axis values for Left/Right Trigger 2
+        match input.GamePad.Trigger.Left with
+        | Some f ->
+            let axis = Raylib.GetGamepadAxisMovement(0, GamepadAxis.LeftTrigger)
+            if axis <> 0f then actions.Add(f axis)
+        | None -> ()
 
-        for button,state,action in definition.Mouse.Buttons do
+        match input.GamePad.Trigger.Right with
+        | Some f ->
+            let axis = Raylib.GetGamepadAxisMovement(0, GamepadAxis.RightTrigger)
+            if axis <> 0f then actions.Add(f axis)
+        | None -> ()
+
+        // Get Mouse input
+        for (key,state,action) in input.Mouse.Buttons do
             match state with
-            | IsPressed  -> if FMouse.isPressed  button then actions.Add (mouseAction action)
-            | IsReleased -> if FMouse.isReleased button then actions.Add (mouseAction action)
-            | IsKeyUp    -> if FMouse.isKeyUp    button then actions.Add (mouseAction action)
-            | IsKeyDown  -> if FMouse.isKeyDown  button then actions.Add (mouseAction action)
+            | IsPressed  -> if cb <| Raylib.IsMouseButtonPressed (mouseToRaylib key) then actions.Add(mousePos action)
+            | IsReleased -> if cb <| Raylib.IsMouseButtonReleased(mouseToRaylib key) then actions.Add(mousePos action)
+            | IsKeyDown  -> if cb <| Raylib.IsMouseButtonDown    (mouseToRaylib key) then actions.Add(mousePos action)
+            | IsKeyUp    -> if cb <| Raylib.IsMouseButtonUp      (mouseToRaylib key) then actions.Add(mousePos action)
 
-        definition.Mouse.ScrollWheel |> Option.iter (fun f ->
-            actions.Add (f (FMouse.scrollWheel ()))
-        )
-        definition.Mouse.Position |> Option.iter (fun f ->
-            actions.Add (f (FMouse.position ()))
-        )
+        input.Mouse.ScrollWheel
+        |> Option.iter(fun f -> actions.Add (f (Raylib.GetMouseWheelMove())))
 
-        List.ofSeq actions
-*)
+        input.Mouse.Position
+        |> Option.iter(fun f -> actions.Add (f (Raylib.GetMousePosition())))
+
+        actions
 
 type FPS = {
     mutable Updates:     int

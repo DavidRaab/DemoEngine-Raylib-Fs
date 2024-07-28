@@ -247,6 +247,11 @@ module Sheet =
     let inline duration (sheet:Sheet) =
         sheet.FrameDuration * (float sheet.Sprites.Length)
 
+    /// Sheet.duration but in float32
+    let inline durationF (sheet:Sheet) =
+        let ts = duration sheet
+        float32 (ts.TotalSeconds)
+
 module Sheets =
     let create data : Sheets =
         if not (Map.containsKey data.Default data.Sheets) then

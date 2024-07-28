@@ -191,9 +191,6 @@ module Drawing =
         | ValueNone ->
             ()
 
-    let line (thickness:float32) color (start:Vector2) (stop:Vector2) =
-        Raylib.DrawLineEx(start, stop, thickness, color)
-
     let rectangle (thickness:int) (color:Color) (start:Vector2) (stop:Vector2) =
         let rect = Rectangle.fromVectors start stop
         Raylib.DrawRectangleRec(rect, Raylib.ColorAlpha(color, 0.1f))

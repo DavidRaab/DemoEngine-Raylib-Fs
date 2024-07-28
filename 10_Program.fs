@@ -8,22 +8,7 @@ open MyGame.Entity
 open MyGame.Utility
 open MyGame.Timer
 open MyGame.Assets
-
-// Shorter Alias
-type Key    = Raylib_cs.KeyboardKey
-type Button = FGamePadButton
-
-// Model
-type MouseRectangle =
-    | NoRectangle
-    | StartRectangle of Vector2
-    | DrawRectangle  of Vector2 * Vector2
-    | EndRectangle   of Vector2 * Vector2
-
-type Model = {
-    Knight:         Entity
-    MouseRectangle: MouseRectangle
-}
+open MyGame.GameStructs
 
 // Called in initModel - Sets up all the boxes
 let boxes assets =
@@ -142,6 +127,7 @@ let boxes assets =
     // ))
 
     ()
+
 
 // Initialize the Game Model
 let initModel assets =
@@ -283,82 +269,7 @@ let initModel assets =
     }
     gameState
 
-type KnightState =
-    | IsAttack of elapsed:TimeSpan * duration:TimeSpan
-    | IsLeft   of Vector2
-    | IsRight  of Vector2
-    | IsCrouch
-    | IsIdle
-
-let statePriority state =
-    match state with
-    | IsAttack _ -> 4
-    | IsLeft   _ -> 3
-    | IsRight  _ -> 3
-    | IsCrouch   -> 2
-    | IsIdle     -> 1
-
-type Action =
-    | Attack
-    | MoveLeft  of Vector2
-    | MoveRight of Vector2
-    | Crouch
-    | Movement  of Vector2
-    | Camera    of Vector2
-    | CameraHome
-    | ScrollZoom  of float32
-    | ZoomIn
-    | ZoomOut
-    | DragStart   of Vector2
-    | DragBetween of Vector2
-    | DragEnd     of Vector2
-
 let mutable knightState = IsIdle
-
-// Input mapping to User Actions
-(*
-let inputMapping = {
-    Keyboard = [
-        Key.Space, IsPressed, Attack
-        Key.Space, IsPressed, Attack
-        Key.Left,  IsKeyDown, MoveLeft  Vector2.Left
-        Key.Right, IsKeyDown, MoveRight Vector2.Right
-        Key.Down,  IsKeyDown, Crouch
-        Key.W,     IsKeyDown, Camera Vector2.Up
-        Key.A,     IsKeyDown, Camera Vector2.Left
-        Key.S,     IsKeyDown, Camera Vector2.Down
-        Key.D,     IsKeyDown, Camera Vector2.Right
-        Key.Home,  IsKeyDown, CameraHome
-        Key.R,     IsKeyDown, ZoomIn
-        Key.F,     IsKeyDown, ZoomOut
-    ]
-    GamePad = {
-        Buttons = [
-            Button.X,         IsPressed, Attack
-            Button.DPadLeft,  IsKeyDown, MoveLeft  Vector2.Left
-            Button.DPadRight, IsKeyDown, MoveRight Vector2.Right
-            Button.DPadDown,  IsKeyDown, Crouch
-        ]
-        ThumbStick = {
-            Left  = Some Movement
-            Right = Some Camera
-        }
-        Trigger = {
-            Left  = Some (fun m -> MoveLeft  (Vector2.Left  * m))
-            Right = Some (fun m -> MoveRight (Vector2.Right * m))
-        }
-    }
-    Mouse = {
-        Buttons = [
-            MouseButton.Left, IsPressed,  World (DragStart)
-            MouseButton.Left, IsKeyDown,  Screen(DragBetween)
-            MouseButton.Left, IsReleased, World (DragEnd)
-        ]
-        ScrollWheel           = Some (cmpF (is ScrollZoom 1f) (is ScrollZoom -1) (is ScrollZoom 0))
-        Position              = None
-    }
-}
-*)
 
 // A Fixed Update implementation that tuns at the specified fixedUpdateTiming
 let mutable resetInput = false
@@ -367,45 +278,49 @@ let fixedUpdate model (deltaTime:float32) =
     Systems.Timer.update      deltaTime
     Systems.Movement.update   deltaTime
     Systems.Animations.update deltaTime
+    model
 
-    (*
+
+let mutable fixedUpdateElapsedTime = 0f
+let update (model:Model) (deltaTime:float32) =
+    FPS.update deltaTime
+
+    // Input Handling
     // Get all Input of user and maps them into actions
-    let actions = FInput.mapInput State.camera inputMapping
+    let actions = Array.ofSeq (Input.getActions inputMapping)
 
     // Handle Rectangle Drawing
     let model =
-        let action = actions |> List.tryFind (function
-            | DragStart _ | DragBetween _ | DragEnd _ -> true
-            | _ -> false
-        )
-        match action with
-        | Some (DragStart start) ->
-            { model with MouseRectangle = StartRectangle start }
-        | Some (DragBetween p) ->
-            let mr =
-                match model.MouseRectangle with
-                | NoRectangle             -> StartRectangle (Camera.screenToWorld p State.camera)
-                | StartRectangle start    -> DrawRectangle  (start,p)
-                | DrawRectangle (start,_) -> DrawRectangle  (start,p)
-                | EndRectangle  (_, _)    -> StartRectangle (Camera.screenToWorld p State.camera)
-            { model with MouseRectangle = mr }
-        | Some (DragEnd stop) ->
-            let mr =
-                match model.MouseRectangle with
-                | NoRectangle             -> NoRectangle
-                | StartRectangle start    -> NoRectangle
-                | DrawRectangle (start,_) -> EndRectangle (start,stop)
-                | EndRectangle  (_, _)    -> NoRectangle
-            { model with MouseRectangle = mr }
-        | Some _ -> model
-        | None   -> model
+        let mutable model = model
+        for action in actions do
+            match action with
+            | DragStart start ->
+                model <- { model with MouseRectangle = StartRectangle start }
+            | DragBetween p ->
+                let mr =
+                    match model.MouseRectangle with
+                    | NoRectangle             -> StartRectangle (p)
+                    | StartRectangle start    -> DrawRectangle  (start,p)
+                    | DrawRectangle (start,_) -> DrawRectangle  (start,p)
+                    | EndRectangle  (_, _)    -> StartRectangle (p)
+                model <- { model with MouseRectangle = mr }
+            | DragEnd (stop) ->
+                let mr =
+                    match model.MouseRectangle with
+                    | NoRectangle             -> NoRectangle
+                    | StartRectangle start    -> NoRectangle
+                    | DrawRectangle (start,_) -> EndRectangle (start,stop)
+                    | EndRectangle  (_, _)    -> NoRectangle
+                model <- { model with MouseRectangle = mr }
+            | _ -> ()
+        model
 
 
     // A state machine, but will be replaced later by some library
     let nextKnightState previousState =
         // helper-function that describes how an action is mapped to a knightState
         let action2state = function
-            | Attack      -> IsAttack (TimeSpan.Zero, Sheet.duration (model.Knight.getSheetExn "Attack"))
+            | Attack      -> IsAttack (0f, Sheet.durationF (model.Knight.getSheetExn "Attack"))
             | MoveLeft  v -> IsLeft v
             | MoveRight v -> IsRight v
             | Crouch      -> IsCrouch
@@ -422,12 +337,14 @@ let fixedUpdate model (deltaTime:float32) =
             | IsAttack (e,d) -> IsAttack (e,d)
             | IsCrouch       -> IsCrouch
             | IsLeft v       ->
-                // model.Knight |> State.View.iter      (View.flipHorizontal true)
-                model.Knight |> State.Transform.fetch (Transform.addPosition (v * 300f * fDeltaTime))
+                // model.Knight |> State.View.iter (View.flipHorizontal true)
+                Dictionary.get model.Knight State.Transform
+                |> ValueOption.iter (Transform.addPosition (v * 300f * deltaTime))
                 IsLeft v
             | IsRight v     ->
                 // model.Knight |> State.View.iter      (View.flipHorizontal false)
-                model.Knight |> State.Transform.fetch (Transform.addPosition (v * 300f * fDeltaTime))
+                Dictionary.get model.Knight State.Transform
+                |> ValueOption.iter (Transform.addPosition (v * 300f * deltaTime))
                 IsRight v
             | IsIdle -> IsIdle
 
@@ -444,9 +361,9 @@ let fixedUpdate model (deltaTime:float32) =
         // 1. Find the next state by mapping every action to a state, and get the one with the highest priority.
         //    For example, when user hits Attack button, it has higher priority as moving
         let wantedState =
-            match List.map action2state actions with
-            | [] -> IsIdle
-            | xs -> List.maxBy statePriority xs
+            match Array.map action2state actions with
+            | [||] -> IsIdle
+            | xs   -> Array.maxBy statePriority xs
 
         // 2. Real state machine. Checks the current state, and the new state, and does
         //    a transition to the new state if allowed.
@@ -468,57 +385,23 @@ let fixedUpdate model (deltaTime:float32) =
     knightState <- nextKnightState knightState
 
     // Update Camera
+    let inline setCameraZoom value =
+        State.camera.Zoom <- clampF 0.2f 3f value
+
     for action in actions do
         match action with
-        | CameraHome                  -> Camera.setPosition   (Vector2.create 0f 0f) State.camera |> ignore
-        | ZoomIn                      -> Camera.addZoom       (1.0f * fDeltaTime) State.camera
-        | ZoomOut                     -> Camera.subtractZoom  (1.0f * fDeltaTime) State.camera
-        | ScrollZoom (IsGreater 0f x) -> Camera.addZoom        0.1f State.camera
-        | ScrollZoom (IsSmaller 0f x) -> Camera.subtractZoom   0.1f State.camera
-        | Camera v                    -> Camera.add           (v * 400f * ((float32 State.camera.MaxZoom + 1f) - float32 State.camera.Zoom) * fDeltaTime) State.camera
+        | CameraHome                  -> State.camera.Target <- (Vector2.create 0f 0f)
+        | ZoomReset                   -> State.camera.Zoom   <- 1f
+        | ZoomIn                      -> setCameraZoom (State.camera.Zoom + (1f * deltaTime))
+        | ZoomOut                     -> setCameraZoom (State.camera.Zoom - (1f * deltaTime))
+        | ScrollZoom (IsGreater 0f x) -> setCameraZoom (State.camera.Zoom + 0.1f)
+        | ScrollZoom (IsSmaller 0f x) -> setCameraZoom (State.camera.Zoom - 0.1f)
+        | Camera v                    ->
+            let newPos =
+                State.camera.Target
+                + ( (v * 300f * deltaTime) * (1f / State.camera.Zoom) )
+            State.camera.Target <- newPos
         | _                           -> ()
-    *)
-
-    // Whenever one fixedUpdate runs the Input states should be resetted
-    // But the current input information should also be avaiable in draw
-    // when needed. So we just set the flag and reset the input after
-    // we have drawn everything
-    resetInput <- true
-
-    // The next model
-    model
-
-let mutable fixedUpdateElapsedTime = 0f
-let update (model:Model) (deltaTime:float32) =
-    FPS.update deltaTime
-
-    let inline isDown key : bool    = CBool.op_Implicit(Raylib.IsKeyDown(key))
-    let inline addPos (pos:Vector2) = State.camera.Target <- (State.camera.Target + (pos * deltaTime))
-
-    let speed        = 300f
-    let invertedZoom = 1f / State.camera.Zoom
-    if isDown Key.W    then addPos (Vector2.Up    * speed * invertedZoom)
-    if isDown Key.A    then addPos (Vector2.Left  * speed * invertedZoom)
-    if isDown Key.S    then addPos (Vector2.Down  * speed * invertedZoom)
-    if isDown Key.D    then addPos (Vector2.Right * speed * invertedZoom)
-    if isDown Key.Z    then State.camera.Zoom   <- 1f
-    if isDown Key.R    then State.camera.Zoom   <- min   3f (State.camera.Zoom + (1f * deltaTime))
-    if isDown Key.F    then State.camera.Zoom   <- max 0.1f (State.camera.Zoom - (1f * deltaTime))
-    if isDown Key.Home then State.camera.Target <- Vector2(0f,0f)
-
-    // Get current keyboard/GamePad state and add it to our KeyBoard/GamePad module
-    // This way we ensure that fixedUpdate has correct keyboard/GamePad state between
-    // fixedUpdate calls and not just from the current update.
-    // let keyboard = Input.Keyboard.GetState ()
-    // FKeyboard.addKeys ()
-    // let gamepad  = Input.GamePad.GetState(0)
-    // FGamePad.addState ()
-    // let mouse    = Input.Mouse.GetState ()
-    // FMouse.addState (State.camera)
-
-    // Close Game
-    // if keyboard.IsKeyDown Key.Escape then
-    //     game.Exit ()
 
     // FixedUpdate Handling
     fixedUpdateElapsedTime <- fixedUpdateElapsedTime + deltaTime
@@ -577,15 +460,15 @@ let draw (model:Model) (deltaTime:float32) =
 
         // Draw GameObjects
         beginMode2D State.camera (fun () ->
-            // Draw Game Elements
             Systems.View.draw ()
 
+            // Vector Position should be World Positions, except in
+            // DrawRectangle. stop still contains a Screen Position
             match model.MouseRectangle with
             | NoRectangle         -> ()
             | StartRectangle _    -> ()
             | DrawRectangle (start,stop) ->
-                // let stop = Camera.screenToWorld stop State.camera
-                let stop = Raylib.GetScreenToWorld2D(stop,State.uiCamera)
+                let stop = Raylib.GetScreenToWorld2D(stop,State.camera)
                 Systems.Drawing.rectangle 2 Color.Black start stop
             | EndRectangle (start,stop) ->
                 Systems.Drawing.rectangle 2 Color.Black start stop
@@ -622,13 +505,6 @@ let draw (model:Model) (deltaTime:float32) =
         )
     )
 
-    // if resetInput then
-    //     resetInput <- false
-    //     FKeyboard.nextState ()
-    //     FGamePad.nextState  ()
-    //     FMouse.nextState    ()
-
-// Run MonoGame Application
 [<EntryPoint;System.STAThread>]
 let main argv =
     // The Game uses a virtual Render solution. It renders everything to a
