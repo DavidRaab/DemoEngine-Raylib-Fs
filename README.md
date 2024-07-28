@@ -5,14 +5,12 @@ and thought the API and just the procedural way it offers is in
 general far better as the typical OO mess. A procedural API is also better
 consumable from F# in my opinion.
 
-Like MonoGame, Raylib doesn't try to be a game engine so it has only
+Like MonoGame, Raylib doesn't try to be a full game engine so it has only
 very basics functionality, but still by default they offer some more features
-like basic Camera and also the ability for basic draw commands.
+like basic Camera and also the ability for basic draw commands. Also
+3D is out-of-the-box supported.
 
 So overall at the moment I am really impressed by Raylib.
-
-I ported the whole code and it is nearly feature complete to the MonoGame
-project. Only Input Handling must be revemped.
 
 Initially the performance compared to MonoGame was a little bit slower,
 but not much. I already implemented some more optimizations and now performance
@@ -24,12 +22,13 @@ I render boxes, at the moment replaced them with some small 16x16 pixel textures
 Every box move at random direction and random rotation. The random directions
 and rotations are periodeically randomized so all boxes constantly move
 unpredictable. All boxes have a Sprite Sheet and they switch between 3 Sprites
-on period interval.
+on periodically interval.
 
 Everything runs single-threaded at the moment. I have implemented some
 simple object culling so only visible objects are drawn but still updated
-when they are not seen. It scales upto 90,000 boxes, and still runs fine
-when all 90,000 boxes are shown.
+when they are not seen. It scales upto 90,000 boxes (maybe more,
+didn't tested beyond that point), and still runs fine when all 90,000 boxes
+are shown.
 
 I have a parent system, so i make all boxes a parent to another object
 and then let this object rotate and all boxes rotate around that
@@ -51,17 +50,25 @@ parent object.
 | 40000 boxes with parent    |  130 fps  |  300 fps
 | 90000 boxes with parent    |   60 fps  |  190 fps
 
+Because of Culling it's hard to "measure" anything as framerate greatly
+depends on how much is seen on the screen. For example 10,000 boxes
+all shown on the screen without parent has ~650 fps, but when
+camera is moved away and nothing is shown then fps goes up to >4,000 fps.
+
+So the "Culling" columns is a rough estimate with default Zoom level
+and the screen is full of boxes. Usually this means around 3,000
+boxes are still rendered.
+
 Oh, i am using Dictionaries as my primary data-structure not Arrays.
 
 # Features implemented
 
 * **Entity**: Everything is an entity and you can add/remove components at runtime.
-* Sprite Sheet & Sprite Sheet Animations
+* **Sprite Sheet & Sprite Sheet Animations**: says it all.
 * **Transforms**: Every Entity can have a parent and is positioned, scaled and rotated to its parent
-* **Camera**: It supports multiple cameras that you can move or Zoom
-* **Input Handling**: *TODO*
+* **Input Handling**: Define a data-structure and get back Actions.
 * **Timer System**: Running code periodically or after a specific time-frame that depends on the GameTime
-* **RenderTexture**: You specify an internal resolution and the game scales with the display resolution
+* **RenderTexture**: You specify an internal resolution and the game scales with the display resolution.
 * **Fixed Update**: A fixed update loop that runs as often as needed per seconds independent from the frame-rate.
 
 # Features to come
@@ -82,7 +89,7 @@ Neat feature to have, but some games work without those.
 
 * Animation System
 * Basic Collision System maybe Physics
-* Particle System
+* Particle System (if that is even needed, you just can use default sprite to show. But in a Particle System it could even further optimize some stuff)
 
 ## Least important
 
