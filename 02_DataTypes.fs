@@ -74,12 +74,10 @@ type Animation = {
     mutable ElapsedTime:   TimeSpan
 }
 
-type MovementDirection =
-    | Relative of Vector2
-    | Absolute of position:Vector2 * speed:float32
-
 type Movement = {
     Direction : MovementDirection voption
     Rotation  : float32<deg>      voption
 }
-
+and MovementDirection =
+    | Relative of Vector2
+    | Absolute of position:Vector2 * speed:float32

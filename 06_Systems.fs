@@ -125,14 +125,14 @@ module Movement =
             | ValueSome t ->
                 match mov.Direction with
                 | ValueNone                        -> ()
-                | ValueSome (Relative dir)         -> Transform.addPosition (dir * deltaTime) t
+                | ValueSome (Relative dir)         -> t.Position <- t.Position + (dir * deltaTime)
                 | ValueSome (Absolute (pos,speed)) ->
                     let dir = (Vector2.Normalize (pos - t.Position)) * speed
-                    Transform.addPosition (dir * deltaTime) t
+                    t.Position <- t.Position + (dir * deltaTime)
 
                 match mov.Rotation with
                 | ValueNone     -> ()
-                | ValueSome rot -> Transform.addRotation (rot * deltaTime) t
+                | ValueSome rot -> t.Rotation <- t.Rotation + (rot * deltaTime)
             | ValueNone ->
                 ()
 

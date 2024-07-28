@@ -36,17 +36,17 @@ module Rad =
     let inline toDeg (radiant:float32<rad>) : float32<deg> =
         (float32 radiant) * 180.0f<deg> / System.MathF.PI
 
-module Origin =
+module Comp =
     /// <summary>
     /// Expects a `width`, `height` and an `origin`. Returns a `Vector2` that
     /// represents the Position of the choosen Origin.
     ///
     /// <code lang="fsharp">
-    /// Origin.toPosition 100f 100f Center = Vector2( 50f,50f)
-    /// Origin.toPosition 100f 100f Right  = Vector2(100f,50f)
+    /// Comp.originToVector2 100f 100f Center = Vector2( 50f,50f)
+    /// Comp.originToVector2 100f 100f Right  = Vector2(100f,50f)
     /// </code>
     /// </summary>
-    let toPosition width height origin : Vector2 =
+    let originToVector2 width height origin : Vector2 =
         let x,y =
             match origin with
             | TopLeft        ->         0f,          0f
@@ -61,136 +61,41 @@ module Origin =
             | Position (x,y) -> x,y
         Vector2(x,y)
 
-module Transform =
-    /// A default constructor that basically does nothing. It expects a record
+    /// default constructors that basically do nothing. It expects a record
     /// and returns it immediately. The whole purpose of this is because sometimes
-    /// type-inference on records can break. By writing `Transform.from { ... }`
+    /// type-inference on records can break. By writing `Comp.createTransform { ... }`
     /// its like an additional type declaration. The Compiler/IDE immediately knows
     /// which record you wanna create and which fields are needed. Also reads
     /// nicely in written code.
-    let inline from (t:Transform) : Transform = t
+    let createTransform (st:Transform) : Transform = st
+    let createView      (st:View)      : View      = st
+    let createSprite    (st:Sprite)    : Sprite    = st
+    let createSheet     (st:Sheet)     : Sheet     = st
+    let createSheets    (st:Sheets)    : Sheets    = st
+    let createAnimation (st:Animation) : Animation = st
+    let createMovement  (st:Movement)  : Movement  = st
 
-    // Constructors
-    let create parent pos rot scale : Transform = from {
-        Parent   = parent
-        Position = pos
-        Rotation = rot
-        Scale    = scale
-    }
-
-    /// Creates a Transform with the supplied vector2
-    let inline fromVector pos : Transform = from {
-        Parent   = ValueNone
-        Position = pos
-        Rotation = 0f<deg>
-        Scale    = Vector2.One
-    }
-
-    /// Creates a Transform with a position specified as x,y coordinates
-    let inline fromPosition x y : Transform = from {
+    let createTransformXY x y = createTransform {
         Parent   = ValueNone
         Position = Vector2(x,y)
+        Scale    = Vector2.One
         Rotation = 0f<deg>
-        Scale    = Vector2.One
     }
 
-    /// Creates a Transform with Position and Rotation
-    let inline fromPosRot pos rot : Transform = from {
-        Parent   = ValueNone
-        Position = pos
-        Rotation = rot
-        Scale    = Vector2.One
-    }
-
-    // Immutable Properties
-    /// Creates a new Transform with the provided Parent Transform.
-    let withParent parent (t:Transform) : Transform =
-        { t with Parent = parent }
-
-    // Mutable Properties
-    let inline setPosition newPos (t:Transform) : Transform =
-        t.Position <- newPos
-        t
-
-    let inline setRotation rotation (t:Transform) : Transform =
-        t.Rotation <- rotation
-        t
-
-    let inline setRotationVector vector (t:Transform) : Transform =
-        t.Rotation <- Rad.toDeg (Vector2.angle vector)
-        t
-
-    let inline setScale newScale (t:Transform) : Transform =
-        t.Scale <- newScale
-        t
-
-    /// Adds a vector to the Position
-    let inline addPosition vec2 (t:Transform) : unit =
-        t.Position <- t.Position + vec2
-
-    // TODO: addLocalTransform - that applies the current rotation
-
-    /// Adds rotation to Transform specified in radiant
-    let inline addRotation rotation (t:Transform) : unit =
-        t.Rotation <- t.Rotation + rotation
-
-    /// Adds rotation to Transform specified in degree
-    let inline addRotationRad (rot:float32<rad>) (t:Transform) : unit =
-        t.Rotation <- t.Rotation + (Rad.toDeg rot)
-
-
-module Sprite =
-    let create (sprite:Sprite) = sprite
-
-    let fromTexture tex = {
+    let createSpriteTexture (tex:Texture2D) = createSprite {
         Texture = tex
         SrcRect = Rectangle(0f,0f,float32 tex.Width,float32 tex.Height)
     }
 
-    let inline rect    sprite = sprite.SrcRect
-    let inline texture sprite = sprite.Texture
-    let inline width   sprite = sprite.SrcRect.Width
-    let inline height  sprite = sprite.SrcRect.Height
-
-    /// Generates a Sprite array from a Texture2D
-    let fromColumnsRows (columns:int) (rows:int) (texture:Texture2D) : Sprite array =
-        let width   = (texture.Width  / columns) |> float32
-        let height  = (texture.Height / rows   ) |> float32
-        let sprites = [|
-            for row=0 to rows-1 do
-            for col=0 to columns-1 do
-                let posx = (float32 col) * width
-                let posy = (float32 row) * height
-                yield create {
-                    Texture = texture
-                    SrcRect = Rectangle(posx, posy, width, height)
-                }
-        |]
-        if sprites.Length = 0 then
-            failwith "Sheet with 0 Sprites"
-        sprites
-
-module View =
-    // Constructors
-    let inline create (v:View) : View = v
-
-    /// Generates a View
-    let fromSprite origin (sprite:Sprite) : View = {
+    let createViewfromSprite origin (sprite:Sprite) : View = {
         Sprite    = sprite
         Tint      = Color.White
         Rotation  = 0.0f<deg>
-        Origin    = Origin.toPosition (float32 sprite.SrcRect.Width) (float32 sprite.SrcRect.Height) origin
+        Origin    = originToVector2 (float32 sprite.SrcRect.Width) (float32 sprite.SrcRect.Height) origin
         Scale     = Vector2.One
     }
 
-    let fromSpriteTop    = fromSprite Top
-    let fromSpriteRight  = fromSprite Right
-    let fromSpriteBottom = fromSprite Bottom
-    let fromSpriteLeft   = fromSprite Left
-    let fromSpriteCenter = fromSprite Center
-
-    /// Generates a View from a Sheet by using the selected Sprite
-    let fromSheet index (sheet:Sheet) : View = {
+    let createViewfromSheet index (sheet:Sheet) : View = {
         Sprite =
             Array.tryItem index sheet.Sprites |> Option.defaultWith (fun _ ->
                 eprintfn "Index [%d] out of Range. Max index is [%d] at\n%s"
@@ -205,30 +110,44 @@ module View =
         Scale     = Vector2.One
     }
 
-    // Immutable Properties
-    let withOrigin name (view:View) : View =
-        let width  = float32 view.Sprite.SrcRect.Width
-        let height = float32 view.Sprite.SrcRect.Height
-        let origin = Origin.toPosition width height name
+    /// set rotation on a transform by transforming the Vector2 to a rotation
+    let inline setRotationVector vector (t:Transform) : Transform =
+        t.Rotation <- Rad.toDeg (Vector2.angle vector)
+        t
+
+    /// Adds rotation to Transform specified in radiant
+    let inline addRotation rotation (t:Transform) : unit =
+        t.Rotation <- t.Rotation + rotation
+
+    /// Adds rotation to Transform specified in degree
+    let inline addRotationRad (rot:float32<rad>) (t:Transform) : unit =
+        t.Rotation <- t.Rotation + (Rad.toDeg rot)
+
+    // TODO: addLocalTransform - that applies the current rotation
+
+    /// Generates a Sprite array from a Texture2D
+    let createSpritesfromColumnsRows (columns:int) (rows:int) (texture:Texture2D) : Sprite array =
+        let width   = (texture.Width  / columns) |> float32
+        let height  = (texture.Height / rows   ) |> float32
+        let sprites = [|
+            for row=0 to rows-1 do
+            for col=0 to columns-1 do
+                let posx = (float32 col) * width
+                let posy = (float32 row) * height
+                yield createSprite {
+                    Texture = texture
+                    SrcRect = Rectangle(posx, posy, width, height)
+                }
+        |]
+        if sprites.Length = 0 then
+            failwith "Sheet with 0 Sprites"
+        sprites
+
+    let viewWithOrigin name (view:View) : View =
+        let width  = view.Sprite.SrcRect.Width
+        let height = view.Sprite.SrcRect.Height
+        let origin = originToVector2 width height name
         { view with Origin = origin }
-
-    // Mutable Properties
-
-    let setScale scale (view:View) : View =
-        view.Scale <- scale
-        view
-
-    let setRotation rot (view:View) : View =
-        view.Rotation <- rot
-        view
-
-    let setTint tint (view:View) : View =
-        view.Tint <- tint
-        view
-
-    let show (view:View) : View =
-        printfn "%A" view
-        view
 
 module Sheet =
     let create data : Sheet =
@@ -274,12 +193,12 @@ module Sheets =
     /// Creates a View from the currently set sprite sheet
     let createView origin (sheets:Sheets) : View =
         let sprite = sheets.Sheets.[sheets.Default].Sprites.[0]
-        View.create {
+        Comp.createView {
             Sprite   = sprite
             Rotation = 0f<deg>
             Tint     = Color.White
             Scale    = Vector2.One
-            Origin   = Origin.toPosition (float32 sprite.SrcRect.Width) (float32 sprite.SrcRect.Height) origin
+            Origin   = Comp.originToVector2 (float32 sprite.SrcRect.Width) (float32 sprite.SrcRect.Height) origin
         }
 
 // module Sheet =
