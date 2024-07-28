@@ -29,7 +29,7 @@ module View =
                     let pos   = Vector2.Transform(
                         me.Position,
                         Matrix.CreateScale(scale.X, scale.Y, 0f)
-                        * Matrix.CreateRotationZ(float32 (Radian.fromDeg pRot)) // rotate by parent position
+                        * Matrix.CreateRotationZ(float32 (Rad.fromDeg pRot)) // rotate by parent position
                         * Matrix.CreateTranslation(Vector3(pPos,0f))            // translate by parent position
                     )
                     pos,pRot+me.Rotation,scale

@@ -21,7 +21,7 @@ So there are three cases of functions
 3  setFunction: record -> record // Mutates the record and returns the record
 *)
 
-module Radian =
+module Rad =
     let inline wrap (x:float32) : float32<rad> =
         LanguagePrimitives.Float32WithMeasure<rad> x
 
@@ -117,7 +117,7 @@ module Transform =
         t
 
     let inline setRotationVector vector (t:Transform) : Transform =
-        t.Rotation <- Radian.toDeg (Vector2.angle vector)
+        t.Rotation <- Rad.toDeg (Vector2.angle vector)
         t
 
     let inline setScale newScale (t:Transform) : Transform =
@@ -136,7 +136,7 @@ module Transform =
 
     /// Adds rotation to Transform specified in degree
     let inline addRotationRad (rot:float32<rad>) (t:Transform) : unit =
-        t.Rotation <- t.Rotation + (Radian.toDeg rot)
+        t.Rotation <- t.Rotation + (Rad.toDeg rot)
 
 
 module Sprite =
