@@ -554,6 +554,12 @@ let main argv =
     let assets        = Assets.load ()
     let mutable model = initModel assets
 
+    for i=0 to 3 do
+        if CBool.op_Implicit (Raylib.IsGamepadAvailable(i)) then
+            printfn "INFO: GamePad %d Available" i
+        else
+            printfn "INFO: No GamePad %d" i
+
     // Game Loop
     while not (CBool.op_Implicit (Raylib.WindowShouldClose())) do
         let deltaTime = Raylib.GetFrameTime ()
