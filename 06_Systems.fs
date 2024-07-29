@@ -18,22 +18,38 @@ module View =
     // returns an voption because it is called recursively on transform. ValueNone
     // indicates when a parent has no transform defined and recursion ends.
     let rec calculateTransform (me:Transform) =
-        match me.Parent with
-        | ValueNone        -> ValueSome (me.Position,me.Rotation,me.Scale)
-        | ValueSome parent ->
-            match Dictionary.get parent State.Transform with
+        match me with
+        | Local  t      -> ValueSome (t.Position,t.Rotation,t.Scale)
+        | Parent parent ->
+            match parent.Parent.getTransform () with
             | ValueNone        -> ValueNone
             | ValueSome parent ->
                 (calculateTransform parent) |> ValueOption.map (fun (pPos,pRot,pScale) ->
-                    let scale = Vector2.create (pScale.X * me.Scale.X) (pScale.Y * me.Scale.Y)
-                    let pos   = Vector2.Transform(
-                        me.Position,
+                    let meScale = Comp.getTransformScale me
+                    let scale   = Vector2.create (pScale.X * meScale.X) (pScale.Y * meScale.Y)
+                    let mePos   = Comp.getTransformPosition me
+                    let pos     = Vector2.Transform(
+                        mePos,
                         Matrix.CreateScale(scale.X, scale.Y, 0f)
                         * Matrix.CreateRotationZ(float32 (Rad.fromDeg pRot)) // rotate by parent position
                         * Matrix.CreateTranslation(Vector3(pPos,0f))            // translate by parent position
                     )
-                    pos,pRot+me.Rotation,scale
+                    let meRot = Comp.getTransformRotation me
+                    pos,pRot+meRot,scale
                 )
+
+    /// Updates all Global fields of every Transform with a Parent
+    let updateGlobals () =
+        for KeyValue(_,t) in State.TransformParent do
+            match t with
+            | Local  _ -> ()
+            | Parent p ->
+                match calculateTransform t with
+                | ValueNone -> ()
+                | ValueSome (pos,rot,scale) ->
+                    p.GlobalPosition <- pos
+                    p.GlobalRotation <- rot
+                    p.GlobalScale    <- scale
 
     // Special variables used for object culling. I assume that the camera is
     // always centered. Mean a camera that target world position 0,0 shows this
@@ -52,19 +68,19 @@ module View =
     let mutable maxY   = 0f
 
     let inline drawTexture transform view =
-        match calculateTransform transform with
-            | ValueNone                           -> ()
-            | ValueSome (pos,rotation,scale) ->
-                if pos.X > minX && pos.X < maxX && pos.Y > minY && pos.Y < maxY then
-                    State.drawed <- State.drawed + 1
-                    Raylib.DrawTexturePro(
-                        texture  = view.Sprite.Texture,
-                        source   = view.Sprite.SrcRect,
-                        dest     = Rectangle(pos, view.Sprite.SrcRect.Width * scale.X * view.Scale.X, view.Sprite.SrcRect.Height * scale.Y * view.Scale.Y),
-                        origin   = view.Origin,
-                        rotation = float32 (rotation + view.Rotation),
-                        tint     = view.Tint
-                    )
+        let pos   = Comp.getTransformGlobalPosition transform
+        let rot   = Comp.getTransformGlobalRotation transform
+        let scale = Comp.getTransformGlobalScale    transform
+        if pos.X > minX && pos.X < maxX && pos.Y > minY && pos.Y < maxY then
+            State.drawed <- State.drawed + 1
+            Raylib.DrawTexturePro(
+                texture  = view.Sprite.Texture,
+                source   = view.Sprite.SrcRect,
+                dest     = Rectangle(pos, view.Sprite.SrcRect.Width * scale.X * view.Scale.X, view.Sprite.SrcRect.Height * scale.Y * view.Scale.Y),
+                origin   = view.Origin,
+                rotation = float32 (rot + view.Rotation),
+                tint     = view.Tint
+            )
 
     let draw () =
         // Used to track how many objects were really drawn
@@ -81,37 +97,37 @@ module View =
         maxY <- cam.Y + ((halfY + offset) * (1f / zoom))
 
         State.View |> Dic2.iter Layer.BG3 (fun entity v ->
-            match Dictionary.get entity State.Transform with
+            match entity.getTransform () with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
         State.View |> Dic2.iter Layer.BG2 (fun entity v ->
-            match Dictionary.get entity State.Transform with
+            match entity.getTransform () with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
         State.View |> Dic2.iter Layer.BG1 (fun entity v ->
-            match Dictionary.get entity State.Transform with
+            match entity.getTransform () with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
         State.View |> Dic2.iter Layer.FG3 (fun entity v ->
-            match Dictionary.get entity State.Transform with
+            match entity.getTransform () with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
         State.View |> Dic2.iter Layer.FG2 (fun entity v ->
-            match Dictionary.get entity State.Transform with
+            match entity.getTransform () with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
         State.View |> Dic2.iter Layer.FG1 (fun entity v ->
-            match Dictionary.get entity State.Transform with
+            match entity.getTransform () with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
@@ -121,18 +137,21 @@ module View =
 module Movement =
     let update (deltaTime:float32) =
         for KeyValue(entity,mov) in State.Movement do
-            match Dictionary.get entity State.Transform with
+            match entity.getTransform () with
             | ValueSome t ->
                 match mov.Direction with
                 | ValueNone                        -> ()
-                | ValueSome (Relative dir)         -> t.Position <- t.Position + (dir * deltaTime)
+                | ValueSome (Relative dir)         -> Comp.addTransformPosition  (dir * deltaTime) t
                 | ValueSome (Absolute (pos,speed)) ->
-                    let dir = (Vector2.Normalize (pos - t.Position)) * speed
-                    t.Position <- t.Position + (dir * deltaTime)
+                    let dir = (Vector2.Normalize (pos - Comp.getTransformPosition t)) * speed
+                    Comp.addTransformPosition (dir * deltaTime) t
 
                 match mov.Rotation with
                 | ValueNone     -> ()
-                | ValueSome rot -> t.Rotation <- t.Rotation + (rot * deltaTime)
+                | ValueSome rot ->
+                    match t with
+                    | Local  t -> t.Rotation <- t.Rotation + (rot * deltaTime)
+                    | Parent t -> t.Rotation <- t.Rotation + (rot * deltaTime)
             | ValueNone ->
                 ()
 
@@ -177,7 +196,7 @@ module Drawing =
         )
 
     let trackPosition (entity:Entity) fontSize (whereToDraw:Vector2) =
-        match Dictionary.get entity State.Transform with
+        match entity.getTransform () with
         | ValueSome t ->
             let screen = Raylib.GetWorldToScreen2D(t.Position, State.camera)
             Raylib.DrawText(

@@ -9,12 +9,39 @@ type TimeSpan = System.TimeSpan
 type Entity =
     Entity of int
 
-type Transform = {
-    Parent: Entity voption
+type LocalTransform = {
     mutable Position: Vector2
     mutable Scale:    Vector2
     mutable Rotation: float32<deg>
 }
+
+type ParentTransform = {
+    Parent: Entity
+    mutable Position:       Vector2
+    mutable GlobalPosition: Vector2
+    mutable Scale:          Vector2
+    mutable GlobalScale:    Vector2
+    mutable Rotation:       float32<deg>
+    mutable GlobalRotation: float32<deg>
+}
+
+type Transform =
+    | Local  of Local :LocalTransform
+    | Parent of Parent:ParentTransform
+    with
+        member inline self.Position
+            with get ()      =
+                match self with
+                | Local  t -> t.Position
+                | Parent t -> t.Position
+            and  set (value) =
+                match self with
+                | Local  t -> t.Position <- value
+                | Parent t -> t.Position <- value
+        member inline self.Rotation =
+            match self with | Local t -> t.Rotation | Parent t -> t.Rotation
+        member inline self.Scale =
+            match self with | Local t -> t.Scale    | Parent t -> t.Scale
 
 [<Struct>]
 type Origin =

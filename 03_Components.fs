@@ -69,7 +69,7 @@ module Comp =
     /// its like an additional type declaration. The Compiler/IDE immediately knows
     /// which record you wanna create and which fields are needed. Also reads
     /// nicely in written code.
-    let createTransform (st:Transform) : Transform = st
+    let createTransform (st:LocalTransform) : Transform = Local st
     let createView      (st:View)      : View      = st
     let createSprite    (st:Sprite)    : Sprite    = st
     let createSheet     (st:Sheet)     : Sheet     =
@@ -86,7 +86,6 @@ module Comp =
     let createMovement  (st:Movement)  : Movement  = st
 
     let createTransformXY x y = createTransform {
-        Parent   = ValueNone
         Position = Vector2(x,y)
         Scale    = Vector2.One
         Rotation = 0f<deg>
@@ -127,17 +126,59 @@ module Comp =
         ElapsedTime   = TimeSpan.Zero
     }
 
-    /// set rotation on a transform by transforming the Vector2 to a rotation
-    let inline setRotationVector vector (t:Transform) : unit =
-        t.Rotation <- Rad.toDeg (Vector2.angle vector)
+    /// Adds a Parent to a Transform. Or overwrites Parent when it already has one.
+    let addTransformParent parent t =
+        // Actually the Global fields must be calculated by fetching the Transform
+        // of the Entity. But i don't have access to that data here. It's only
+        // available when i have State. So i just initialize this fields to
+        // Vector2(0,0). This is okay, because at the end of every frame the
+        // Global fields should be updated/calculated.
+        match t with
+        | Local t -> Parent {
+                Parent          = parent
+                Position        = t.Position
+                GlobalPosition  = Vector2.Zero
+                Scale           = t.Scale
+                GlobalScale     = Vector2.One
+                Rotation        = t.Rotation
+                GlobalRotation  = 0f<deg>
+            }
+        | Parent t -> Parent {
+                Parent          = parent
+                Position        = t.Position
+                GlobalPosition  = Vector2.Zero
+                Scale           = t.Scale
+                GlobalScale     = Vector2.One
+                Rotation        = t.Rotation
+                GlobalRotation  = 0f<deg>
+            }
 
-    /// Adds rotation to Transform specified in radiant
-    let inline addRotation rotation (t:Transform) : unit =
-        t.Rotation <- t.Rotation + rotation
+    let getTransformPosition       t = match t with | Local t -> t.Position | Parent t -> t.Position
+    let getTransformRotation       t = match t with | Local t -> t.Rotation | Parent t -> t.Rotation
+    let getTransformScale          t = match t with | Local t -> t.Scale    | Parent t -> t.Scale
+    let getTransformGlobalPosition t = match t with | Local t -> t.Position | Parent t -> t.GlobalPosition
+    let getTransformGlobalRotation t = match t with | Local t -> t.Rotation | Parent t -> t.GlobalRotation
+    let getTransformGlobalScale    t = match t with | Local t -> t.Scale    | Parent t -> t.GlobalScale
+
+    let setTransformPosition pos t : unit =
+        match t with | Local  t -> t.Position <- pos | Parent t -> t.Position <- pos
+    let setTransformScale scale t : unit =
+        match t with | Local  t -> t.Scale <- scale  | Parent t -> t.Scale <- scale
+    let setTransformRotation rot t : unit =
+        match t with | Local  t -> t.Rotation <- rot | Parent t -> t.Rotation <- rot
+
+    let addTransformPosition v t : unit =
+        match t with
+        | Local  t -> t.Position <- t.Position + v
+        | Parent t -> t.Position <- t.Position + v
+
+    /// set rotation on a transform by transforming the Vector2 to a rotation
+    let inline setTransformRotationV vector (t:Transform) : unit =
+        t |> setTransformRotation (Rad.toDeg (Vector2.angle vector))
 
     /// Adds rotation to Transform specified in degree
     let inline addRotationRad (rot:float32<rad>) (t:Transform) : unit =
-        t.Rotation <- t.Rotation + (Rad.toDeg rot)
+        t |> setTransformRotation ((getTransformRotation t) + (Rad.toDeg rot))
 
     // TODO: addLocalTransform - that applies the current rotation
 

@@ -37,26 +37,26 @@ let boxes assets =
     //                                All     | Culling
     //                               ---------+----------
     //  3000 boxes without parent -> 2050 fps | 2700 fps
-    //  6000 boxes without parent -> 1120 fps | 1950 fps
-    // 10000 boxes without parent ->  690 fps | 1550 fps
-    // 40000 boxes without parent ->  180 fps |  900 fps
+    //  6000 boxes without parent -> 1100 fps | 1950 fps
+    // 10000 boxes without parent ->  660 fps | 1550 fps
+    // 40000 boxes without parent ->  160 fps |  900 fps
     // 90000 boxes without parent ->   90 fps |  450 fps
     //                                        |
-    //  3000 boxes with parent    -> 1700 fps | 2500 fps
-    //  6000 boxes with parent    ->  900 fps | 1300 fps
-    // 10000 boxes with parent    ->  550 fps |  800 fps
-    // 40000 boxes with parent    ->  130 fps |  300 fps
-    // 90000 boxes with parent    ->   60 fps |  190 fps
+    //  3000 boxes with parent    -> 2000 fps | 2500 fps
+    //  6000 boxes with parent    -> 1050 fps | 2000 fps
+    // 10000 boxes with parent    ->  630 fps | 1500 fps
+    // 40000 boxes with parent    ->  160 fps |  600 fps
+    // 90000 boxes with parent    ->   45 fps |  160 fps
     //
     // Create 3600 Boxes as child of boxesOrigin (1450 fps)
     for x=1 to 100 do
-        for y=1 to 100 do
+        for y=1 to 30 do
             boxes.Add (Entity.init (fun box ->
                 box.addTransform (
                     Comp.createTransformXY (float32 x * 11f) (float32 y * 11f)
                     // this cost a lot of performance because rotation/position/scale of all 3.000 boxes
                     // must be computed with a matrix calculated of the parent.
-                    // |> Transform.withParent (ValueSome boxesOrigin)
+                    |> Comp.addTransformParent boxesOrigin
                 )
                 box.addView Layer.BG2 (Comp.createViewFromSheets Center assets.Box)
                 box.addAnimation (Comp.createAnimationFromSheets assets.Box)
@@ -114,8 +114,8 @@ let initModel assets =
         )
         e.addView Layer.FG1 (Comp.createViewfromSprite Center assets.Sprites.Arrow)
         Systems.Timer.addTimer (Timer.every (sec 0.1) () (fun _ dt ->
-            match Dictionary.get e State.Transform with
-            | ValueSome t -> t.Rotation <- t.Rotation + 10f<deg>
+            match e.getTransform () with
+            | ValueSome t -> Comp.setTransformRotation (t.Rotation + 10f<deg>) t
             | ValueNone   -> ()
             State ()
         ))
@@ -132,10 +132,10 @@ let initModel assets =
 
     // Creates a box that is a parent of the knight and moves when Knight moves
     let box = Entity.init (fun e ->
-        e.addTransform ({
+        e.addTransform (
             Comp.createTransformXY 0f 80f
-            with Parent = ValueSome knight
-        })
+            |> Comp.addTransformParent knight
+        )
         e.addView Layer.FG1 ({
             Comp.createViewfromSprite Center assets.Sprites.WhiteBox
             with Tint = Color.Blue
@@ -151,15 +151,15 @@ let initModel assets =
         Systems.Timer.addTimer (Timer.every (sec 0.1) (Choice1Of2 0) (fun state dt ->
             match state with
             | Choice1Of2 right ->
-                Dictionary.get e State.Transform
-                |> ValueOption.iter (fun t -> t.Position <- t.Position + (Vector2.Right * 5f))
+                e.getTransform ()
+                |> ValueOption.iter (fun t -> t |> Comp.setTransformPosition (t.Position + (Vector2.Right * 5f)))
 
                 if right < 20
                 then State (Choice1Of2 (right+1))
                 else State (Choice2Of2 (right-1))
             | Choice2Of2 left ->
-                Dictionary.get e State.Transform
-                |> ValueOption.iter (fun t -> t.Position <- t.Position + (Vector2.Left * 5f))
+                e.getTransform ()
+                |> ValueOption.iter (fun t -> t |> Comp.setTransformPosition (t.Position + (Vector2.Left * 5f)))
 
                 if left > 0
                 then State (Choice2Of2 (left-1))
@@ -168,21 +168,21 @@ let initModel assets =
     )
 
     let planet1 = Entity.init (fun e ->
-        e.addTransform({
+        e.addTransform(
             Comp.createTransformXY 0f -100f
-            with Parent = (ValueSome sun)
-        })
+            |> Comp.addTransformParent sun
+        )
         e.addView Layer.FG1 ({
             Comp.createViewfromSprite Center assets.Sprites.WhiteBox
-            with Tint = Color.DarkBlue
+            with Tint = Color.DarkGreen
         })
     )
 
     let planet2 = Entity.init (fun e ->
-        e.addTransform({
+        e.addTransform(
             Comp.createTransformXY 0f -50f
-            with Parent = ValueSome planet1
-        })
+            |> Comp.addTransformParent planet1
+        )
         e.addView Layer.FG1 ({
             Comp.createViewfromSprite Center assets.Sprites.WhiteBox
             with Tint = Color.DarkPurple
@@ -190,10 +190,10 @@ let initModel assets =
     )
 
     let planet3 = Entity.init (fun e ->
-        e.addTransform({
+        e.addTransform(
             Comp.createTransformXY 0f -20f
-            with Parent = ValueSome planet2
-        })
+            |> Comp.addTransformParent planet2
+        )
         e.addView Layer.FG1 ({
             Comp.createViewfromSprite Center assets.Sprites.WhiteBox
             with Tint = Color.Brown
@@ -203,8 +203,8 @@ let initModel assets =
     // Let stars rotate at 60 fps and 1° each frame
     Systems.Timer.addTimer (Timer.every (sec (1.0/60.0)) () (fun _ _ ->
         [sun;planet1;planet2;planet3] |> List.iter (fun p ->
-            match Dictionary.get p State.Transform with
-            | ValueSome t -> t.Rotation <- t.Rotation + 1f<deg>
+            match p.getTransform () with
+            | ValueSome t -> t |> Comp.setTransformRotation (t.Rotation + 1f<deg>)
             | ValueNone   -> ()
         )
         State ()
@@ -214,7 +214,7 @@ let initModel assets =
     Systems.Timer.addTimer (Timer.every (sec 0.1) (Choice1Of2 0) (fun state dt ->
         match state with
         | Choice1Of2 state ->
-            match Dictionary.get box State.Transform with
+            match box.getTransform () with
             | ValueSome t -> t.Position <- t.Position + (Vector2.create 10f 0f)
             | ValueNone   -> ()
 
@@ -222,7 +222,7 @@ let initModel assets =
             then State (Choice1Of2 (state+1))
             else State (Choice2Of2 (state+1))
         | Choice2Of2 state ->
-            match Dictionary.get box State.Transform with
+            match box.getTransform () with
             | ValueSome t -> t.Position <- t.Position + (Vector2.create -10f 0f)
             | ValueNone   -> ()
 
@@ -250,6 +250,7 @@ let mutable resetInput = false
 let fixedUpdateTiming = 1.0f / 60.0f
 let fixedUpdate model (deltaTime:float32) =
     Systems.Timer.update      deltaTime
+    Systems.View.updateGlobals ()
     Systems.Movement.update   deltaTime
     Systems.Animations.update deltaTime
     model
@@ -312,12 +313,12 @@ let update (model:Model) (deltaTime:float32) =
             | IsCrouch       -> IsCrouch
             | IsLeft v       ->
                 // model.Knight |> State.View.iter (View.flipHorizontal true)
-                Dictionary.get model.Knight State.Transform
+                model.Knight.getTransform ()
                 |> ValueOption.iter (fun t -> t.Position <- t.Position + (v * 300f * deltaTime))
                 IsLeft v
             | IsRight v     ->
                 // model.Knight |> State.View.iter      (View.flipHorizontal false)
-                Dictionary.get model.Knight State.Transform
+                model.Knight.getTransform ()
                 |> ValueOption.iter (fun t -> t.Position <- t.Position + (v * 300f * deltaTime))
                 IsRight v
             | IsIdle -> IsIdle
@@ -360,7 +361,7 @@ let update (model:Model) (deltaTime:float32) =
 
     // Update Camera
     let inline setCameraZoom value =
-        State.camera.Zoom <- clampF 0.2f 3f value
+        State.camera.Zoom <- clampF 0.1f 3f value
 
     for action in actions do
         match action with

@@ -16,7 +16,9 @@ module State =
     let mutable uiCamera = Unchecked.defaultof<Camera2D>
 
     // State variables
-    let Transform = Dictionary<Entity,Transform>(50000)
-    let Movement  = Dictionary<Entity,Movement>(50000)
-    let Animation = Dictionary<Entity,Animation>(50000)
-    let View      = Dic2.create<Layer, Entity, View>()
+    // let Transform = Dic2.create<TransformState, Entity, Transform> ()
+    let TransformLocal  = Dictionary<Entity,Transform> ()
+    let TransformParent = Dictionary<Entity,Transform> ()
+    let Movement        = Dictionary<Entity,Movement>  ()
+    let Animation       = Dictionary<Entity,Animation> ()
+    let View            = Dic2.create<Layer, Entity, View> ()

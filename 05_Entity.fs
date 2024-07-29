@@ -33,8 +33,24 @@ module Entity =
 [<AutoOpen>]
 module EntityExtension =
     type Entity with
-        member entity.addTransform t     = Dictionary.add    entity t    State.Transform
-        member entity.deleteTransform () = Dictionary.remove entity      State.Transform
+        member entity.addTransform t =
+            match t with
+            | Local _ ->
+                Dictionary.remove entity   State.TransformParent
+                Dictionary.add    entity t State.TransformLocal
+            | Parent _ ->
+                Dictionary.remove entity   State.TransformLocal
+                Dictionary.add    entity t State.TransformParent
+        member entity.getTransform () =
+            match Dictionary.get entity State.TransformLocal with
+            | ValueSome t -> ValueSome t
+            | ValueNone   ->
+                match Dictionary.get entity State.TransformParent with
+                | ValueSome t -> ValueSome t
+                | ValueNone   -> ValueNone
+        member entity.deleteTransform () =
+            Dictionary.remove entity State.TransformLocal
+            Dictionary.remove entity State.TransformParent
         member entity.addMovement mov    = Dictionary.add    entity mov  State.Movement
         member entity.deleteMovement ()  = Dictionary.remove entity      State.Movement
         member entity.addAnimation anim  = Dictionary.add    entity anim State.Animation

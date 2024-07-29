@@ -148,7 +148,7 @@ module Extensions =
             else dic.Add(key,value)
 
         static member inline remove key (dic:Dictionary<'a,'b>) =
-            dic.Remove(key)
+            dic.Remove(key) |> ignore
 
         static member change key f (dic:Dictionary<'a,'b>) =
             match dic.TryGetValue key with
