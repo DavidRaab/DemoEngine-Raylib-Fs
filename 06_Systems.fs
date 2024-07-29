@@ -12,8 +12,8 @@ open MyGame.Timer
 
 type TimeSpan = System.TimeSpan
 
-// View System draws entity
-module View =
+// Transform System updates the Global_ fields when a Parent is set
+module Transform =
     // Calculates position, rotation and scale relative to parent
     // returns an voption because it is called recursively on transform. ValueNone
     // indicates when a parent has no transform defined and recursion ends.
@@ -36,7 +36,7 @@ module View =
                 )
 
     /// Updates all Global fields of every Transform with a Parent
-    let updateGlobals () =
+    let update () =
         for KeyValue(_,t) in State.TransformParent do
             match t with
             | Local  _ -> ()
@@ -48,6 +48,8 @@ module View =
                     p.GlobalRotation <- rot
                     p.GlobalScale    <- scale
 
+// View System draws entity
+module View =
     // Special variables used for object culling. I assume that the camera is
     // always centered. Mean a camera that target world position 0,0 shows this
     // point at the center of the camera. From this point only objects that
