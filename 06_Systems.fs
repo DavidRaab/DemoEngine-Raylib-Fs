@@ -80,37 +80,37 @@ module View =
         minY <- cam.Y - ((halfY + offset) * (1f / zoom))
         maxY <- cam.Y + ((halfY + offset) * (1f / zoom))
 
-        State.View |> Dic2.iter (true,Layer.BG3) (fun entity v ->
+        State.View |> Dic2.iter Layer.BG3 (fun entity v ->
             match Dictionary.get entity State.Transform with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
-        State.View |> Dic2.iter (true,Layer.BG2) (fun entity v ->
+        State.View |> Dic2.iter Layer.BG2 (fun entity v ->
             match Dictionary.get entity State.Transform with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
-        State.View |> Dic2.iter (true,Layer.BG1) (fun entity v ->
+        State.View |> Dic2.iter Layer.BG1 (fun entity v ->
             match Dictionary.get entity State.Transform with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
-        State.View |> Dic2.iter (true,Layer.FG3) (fun entity v ->
+        State.View |> Dic2.iter Layer.FG3 (fun entity v ->
             match Dictionary.get entity State.Transform with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
-        State.View |> Dic2.iter (true,Layer.FG2) (fun entity v ->
+        State.View |> Dic2.iter Layer.FG2 (fun entity v ->
             match Dictionary.get entity State.Transform with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
-        State.View |> Dic2.iter (true,Layer.FG1) (fun entity v ->
+        State.View |> Dic2.iter Layer.FG1 (fun entity v ->
             match Dictionary.get entity State.Transform with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()

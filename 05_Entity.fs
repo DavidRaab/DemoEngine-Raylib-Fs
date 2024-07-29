@@ -39,8 +39,8 @@ module EntityExtension =
         member entity.deleteMovement ()  = Dictionary.remove entity      State.Movement
         member entity.addAnimation anim  = Dictionary.add    entity anim State.Animation
         member entity.deleteAnimation () = Dictionary.remove entity      State.Animation
-        member entity.addView layer view = Dic2.add (struct (true,layer)) entity view State.View
-        member entity.deleteView ()      = Dic2.remove entity State.View
+        member entity.addView layer view = Dic2.add    layer entity view State.View
+        member entity.deleteView ()      = Dic2.remove       entity      State.View
         member entity.setAnimation name =
             match Dictionary.get entity State.Animation with
             | ValueSome anim -> Comp.switchAnimation name anim

@@ -16,8 +16,7 @@ module State =
     let mutable uiCamera = Unchecked.defaultof<Camera2D>
 
     // State variables
-    let Transform        = Dictionary<Entity,Transform>()
-    let Movement         = Dictionary<Entity,Movement>()
-    let Animation        = Dictionary<Entity,Animation>()
-    // (bool * Layer) represents IsVisible * Layer
-    let View             = Dic2.create<struct (bool * Layer), Entity, View>()
+    let Transform = Dictionary<Entity,Transform>(50000)
+    let Movement  = Dictionary<Entity,Movement>(50000)
+    let Animation = Dictionary<Entity,Animation>(50000)
+    let View      = Dic2.create<Layer, Entity, View>()

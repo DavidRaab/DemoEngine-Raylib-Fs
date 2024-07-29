@@ -100,35 +100,6 @@ let boxes assets =
         else State max
     ))
 
-    // only show every second box - 3000 out of 6000
-    //   - with parent    1500 fps
-    //   - without parent 2500 fps
-    // let mutable switch = true
-    // for box in boxes do
-    //     if switch then
-    //         State.View.switchVisibility box
-    //     switch <- not switch
-
-    //----------
-    // randomly switch visibility. after some seconds roughly the half of boxes are visisble
-    //
-    // All without parent
-    // rendering 3000 boxes all shown                -> 2500 fps
-    // rendering 3000 boxes from 6000 (half visible) -> 2200 fps
-    //
-    // Calling switchVisibility has some costs as a view has to be added/removed to
-    // different containers. But usually in a typical game this is not often
-    // called. If visibility stays the same then showing half of the boxes
-    // nearly has same performance as showing all boxes without anyone being
-    // deactivated
-    // let rng2 = System.Random ()
-    // Systems.Timer.addTimer (Timer.every (sec 0.25) () (fun _ _ ->
-    //     for i=1 to 250 do
-    //         let ridx = rng2.Next(boxes.Count)
-    //         State.View.switchVisibility boxes.[ridx]
-    //     State ()
-    // ))
-
     ()
 
 
@@ -485,10 +456,8 @@ let draw (model:Model) (deltaTime:float32) =
             Systems.Drawing.trackPosition  model.Knight 20 (Vector2.create 0f 340f)
 
             let mutable visibleCount = 0
-            for key in State.View.Data.Keys do
-                match key with
-                | true,  _ -> visibleCount <- visibleCount + State.View.Data.[key].Count
-                | false, _ -> ()
+            for layer in State.View.Data.Keys do
+                visibleCount <- visibleCount + State.View.Data.[layer].Count
             Raylib.DrawText(
                 text     = String.Format("Visible: {0} {1}", visibleCount, State.drawed),
                 posX     = 250,
