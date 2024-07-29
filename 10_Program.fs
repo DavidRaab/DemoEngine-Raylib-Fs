@@ -45,12 +45,11 @@ let boxes assets =
     //  3000 boxes with parent    -> 2000 fps | 2500 fps
     //  6000 boxes with parent    -> 1050 fps | 2000 fps
     // 10000 boxes with parent    ->  630 fps | 1500 fps
-    // 40000 boxes with parent    ->  160 fps |  600 fps
+    // 40000 boxes with parent    ->  130 fps |  600 fps
     // 90000 boxes with parent    ->   45 fps |  160 fps
     //
-    // Create 3600 Boxes as child of boxesOrigin (1450 fps)
     for x=1 to 100 do
-        for y=1 to 30 do
+        for y=1 to 100 do
             boxes.Add (Entity.init (fun box ->
                 box.addTransform (
                     Comp.createTransformXY (float32 x * 11f) (float32 y * 11f)
@@ -115,7 +114,7 @@ let initModel assets =
         e.addView Layer.FG1 (Comp.createViewfromSprite Center assets.Sprites.Arrow)
         Systems.Timer.addTimer (Timer.every (sec 0.1) () (fun _ dt ->
             match e.getTransform () with
-            | ValueSome t -> Comp.setTransformRotation (t.Rotation + 10f<deg>) t
+            | ValueSome t -> t.Rotation <- t.Rotation + 10f<deg>
             | ValueNone   -> ()
             State ()
         ))
@@ -152,14 +151,14 @@ let initModel assets =
             match state with
             | Choice1Of2 right ->
                 e.getTransform ()
-                |> ValueOption.iter (fun t -> t |> Comp.setTransformPosition (t.Position + (Vector2.Right * 5f)))
+                |> ValueOption.iter (fun t -> t.Position <-  (t.Position + (Vector2.Right * 5f)))
 
                 if right < 20
                 then State (Choice1Of2 (right+1))
                 else State (Choice2Of2 (right-1))
             | Choice2Of2 left ->
                 e.getTransform ()
-                |> ValueOption.iter (fun t -> t |> Comp.setTransformPosition (t.Position + (Vector2.Left * 5f)))
+                |> ValueOption.iter (fun t -> t.Position <- (t.Position + (Vector2.Left * 5f)))
 
                 if left > 0
                 then State (Choice2Of2 (left-1))
@@ -204,7 +203,7 @@ let initModel assets =
     Systems.Timer.addTimer (Timer.every (sec (1.0/60.0)) () (fun _ _ ->
         [sun;planet1;planet2;planet3] |> List.iter (fun p ->
             match p.getTransform () with
-            | ValueSome t -> t |> Comp.setTransformRotation (t.Rotation + 1f<deg>)
+            | ValueSome t -> t.Rotation <- (t.Rotation + 1f<deg>)
             | ValueNone   -> ()
         )
         State ()

@@ -153,32 +153,13 @@ module Comp =
                 GlobalRotation  = 0f<deg>
             }
 
-    let getTransformPosition       t = match t with | Local t -> t.Position | Parent t -> t.Position
-    let getTransformRotation       t = match t with | Local t -> t.Rotation | Parent t -> t.Rotation
-    let getTransformScale          t = match t with | Local t -> t.Scale    | Parent t -> t.Scale
-    let getTransformGlobalPosition t = match t with | Local t -> t.Position | Parent t -> t.GlobalPosition
-    let getTransformGlobalRotation t = match t with | Local t -> t.Rotation | Parent t -> t.GlobalRotation
-    let getTransformGlobalScale    t = match t with | Local t -> t.Scale    | Parent t -> t.GlobalScale
-
-    let setTransformPosition pos t : unit =
-        match t with | Local  t -> t.Position <- pos | Parent t -> t.Position <- pos
-    let setTransformScale scale t : unit =
-        match t with | Local  t -> t.Scale <- scale  | Parent t -> t.Scale <- scale
-    let setTransformRotation rot t : unit =
-        match t with | Local  t -> t.Rotation <- rot | Parent t -> t.Rotation <- rot
-
-    let addTransformPosition v t : unit =
-        match t with
-        | Local  t -> t.Position <- t.Position + v
-        | Parent t -> t.Position <- t.Position + v
-
     /// set rotation on a transform by transforming the Vector2 to a rotation
     let inline setTransformRotationV vector (t:Transform) : unit =
-        t |> setTransformRotation (Rad.toDeg (Vector2.angle vector))
+        t.Rotation <- (Rad.toDeg (Vector2.angle vector))
 
     /// Adds rotation to Transform specified in degree
     let inline addRotationRad (rot:float32<rad>) (t:Transform) : unit =
-        t |> setTransformRotation ((getTransformRotation t) + (Rad.toDeg rot))
+        t.Rotation <- t.Rotation + (Rad.toDeg rot)
 
     // TODO: addLocalTransform - that applies the current rotation
 

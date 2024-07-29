@@ -25,17 +25,14 @@ module View =
             | ValueNone        -> ValueNone
             | ValueSome parent ->
                 (calculateTransform parent) |> ValueOption.map (fun (pPos,pRot,pScale) ->
-                    let meScale = Comp.getTransformScale me
-                    let scale   = Vector2.create (pScale.X * meScale.X) (pScale.Y * meScale.Y)
-                    let mePos   = Comp.getTransformPosition me
+                    let scale   = Vector2.create (pScale.X * me.Scale.X) (pScale.Y * me.Scale.Y)
                     let pos     = Vector2.Transform(
-                        mePos,
+                        me.Position,
                         Matrix.CreateScale(scale.X, scale.Y, 0f)
                         * Matrix.CreateRotationZ(float32 (Rad.fromDeg pRot)) // rotate by parent position
                         * Matrix.CreateTranslation(Vector3(pPos,0f))            // translate by parent position
                     )
-                    let meRot = Comp.getTransformRotation me
-                    pos,pRot+meRot,scale
+                    pos,pRot+me.Rotation,scale
                 )
 
     /// Updates all Global fields of every Transform with a Parent
@@ -67,10 +64,10 @@ module View =
     let mutable minY   = 0f
     let mutable maxY   = 0f
 
-    let inline drawTexture transform view =
-        let pos   = Comp.getTransformGlobalPosition transform
-        let rot   = Comp.getTransformGlobalRotation transform
-        let scale = Comp.getTransformGlobalScale    transform
+    let inline drawTexture (transform:Transform) view =
+        let pos   = transform.GlobalPosition
+        let rot   = transform.GlobalRotation
+        let scale = transform.GlobalScale
         if pos.X > minX && pos.X < maxX && pos.Y > minY && pos.Y < maxY then
             State.drawed <- State.drawed + 1
             Raylib.DrawTexturePro(
@@ -141,10 +138,10 @@ module Movement =
             | ValueSome t ->
                 match mov.Direction with
                 | ValueNone                        -> ()
-                | ValueSome (Relative dir)         -> Comp.addTransformPosition  (dir * deltaTime) t
+                | ValueSome (Relative dir)         -> t.Position <- t.Position + (dir * deltaTime)
                 | ValueSome (Absolute (pos,speed)) ->
-                    let dir = (Vector2.Normalize (pos - Comp.getTransformPosition t)) * speed
-                    Comp.addTransformPosition (dir * deltaTime) t
+                    let dir = (Vector2.Normalize (pos - t.Position)) * speed
+                    t.Position <- t.Position + (dir * deltaTime)
 
                 match mov.Rotation with
                 | ValueNone     -> ()

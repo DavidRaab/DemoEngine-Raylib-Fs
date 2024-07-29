@@ -26,8 +26,8 @@ type ParentTransform = {
 }
 
 type Transform =
-    | Local  of Local :LocalTransform
-    | Parent of Parent:ParentTransform
+    | Local  of LocalTransform
+    | Parent of ParentTransform
     with
         member inline self.Position
             with get ()      =
@@ -38,10 +38,33 @@ type Transform =
                 match self with
                 | Local  t -> t.Position <- value
                 | Parent t -> t.Position <- value
-        member inline self.Rotation =
-            match self with | Local t -> t.Rotation | Parent t -> t.Rotation
-        member inline self.Scale =
-            match self with | Local t -> t.Scale    | Parent t -> t.Scale
+
+        member inline self.Rotation
+            with get () =
+                match self with
+                | Local  t -> t.Rotation
+                | Parent t -> t.Rotation
+            and set(value) =
+                match self with
+                | Local  t -> t.Rotation <- value
+                | Parent t -> t.Rotation <- value
+
+        member inline self.Scale
+            with get () =
+                match self with
+                | Local  t -> t.Scale
+                | Parent t -> t.Scale
+            and set (value) =
+                match self with
+                | Local  t -> t.Scale <- value
+                | Parent t -> t.Scale <- value
+
+        member inline self.GlobalPosition
+            with get () = match self with | Local t -> t.Position | Parent t -> t.GlobalPosition
+        member inline self.GlobalRotation
+            with get () = match self with | Local t -> t.Rotation | Parent t -> t.GlobalRotation
+        member inline self.GlobalScale
+            with get () = match self with | Local t -> t.Scale    | Parent t -> t.GlobalScale
 
 [<Struct>]
 type Origin =
