@@ -21,7 +21,7 @@ module Transform =
         match me with
         | Local  t      -> ValueSome (t.Position,t.Rotation,t.Scale)
         | Parent parent ->
-            match parent.Parent.getTransform () with
+            match Entity.getTransform parent.Parent with
             | ValueNone        -> ValueNone
             | ValueSome parent ->
                 (calculateTransform parent) |> ValueOption.map (fun (pPos,pRot,pScale) ->
@@ -96,37 +96,37 @@ module View =
         maxY <- cam.Y + ((halfY + offset) * (1f / zoom))
 
         State.View |> Dic2.iter Layer.BG3 (fun entity v ->
-            match entity.getTransform () with
+            match Entity.getTransform entity with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
         State.View |> Dic2.iter Layer.BG2 (fun entity v ->
-            match entity.getTransform () with
+            match Entity.getTransform entity with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
         State.View |> Dic2.iter Layer.BG1 (fun entity v ->
-            match entity.getTransform () with
+            match Entity.getTransform entity with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
         State.View |> Dic2.iter Layer.FG3 (fun entity v ->
-            match entity.getTransform () with
+            match Entity.getTransform entity with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
         State.View |> Dic2.iter Layer.FG2 (fun entity v ->
-            match entity.getTransform () with
+            match Entity.getTransform entity with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
         State.View |> Dic2.iter Layer.FG1 (fun entity v ->
-            match entity.getTransform () with
+            match Entity.getTransform entity with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
@@ -136,7 +136,7 @@ module View =
 module Movement =
     let update (deltaTime:float32) =
         for KeyValue(entity,mov) in State.Movement do
-            match entity.getTransform () with
+            match Entity.getTransform entity with
             | ValueSome t ->
                 match mov.Direction with
                 | ValueNone                        -> ()
@@ -195,7 +195,7 @@ module Drawing =
         )
 
     let trackPosition (entity:Entity) fontSize (whereToDraw:Vector2) =
-        match entity.getTransform () with
+        match Entity.getTransform entity with
         | ValueSome t ->
             let screen = Raylib.GetWorldToScreen2D(t.Position, State.camera)
             Raylib.DrawText(

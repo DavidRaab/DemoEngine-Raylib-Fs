@@ -30,40 +30,40 @@ module Entity =
     let all () =
         entities :> seq<Entity>
 
-[<AutoOpen>]
-module EntityExtension =
-    type Entity with
-        member entity.addTransform t =
-            match t with
-            | Local _ ->
-                Dictionary.remove entity   State.TransformParent
-                Dictionary.add    entity t State.TransformLocal
-            | Parent _ ->
-                Dictionary.remove entity   State.TransformLocal
-                Dictionary.add    entity t State.TransformParent
-        member entity.getTransform () =
-            match Dictionary.get entity State.TransformLocal with
+    let addTransform t entity =
+        match t with
+        | Local _ ->
+            Dictionary.remove entity   State.TransformParent
+            Dictionary.add    entity t State.TransformLocal
+        | Parent _ ->
+            Dictionary.remove entity   State.TransformLocal
+            Dictionary.add    entity t State.TransformParent
+
+    let getTransform entity =
+        match Dictionary.get entity State.TransformLocal with
+        | ValueSome t -> ValueSome t
+        | ValueNone   ->
+            match Dictionary.get entity State.TransformParent with
             | ValueSome t -> ValueSome t
-            | ValueNone   ->
-                match Dictionary.get entity State.TransformParent with
-                | ValueSome t -> ValueSome t
-                | ValueNone   -> ValueNone
-        member entity.deleteTransform () =
-            Dictionary.remove entity State.TransformLocal
-            Dictionary.remove entity State.TransformParent
-        member entity.addMovement mov    = Dictionary.add    entity mov  State.Movement
-        member entity.deleteMovement ()  = Dictionary.remove entity      State.Movement
-        member entity.addAnimation anim  = Dictionary.add    entity anim State.Animation
-        member entity.deleteAnimation () = Dictionary.remove entity      State.Animation
-        member entity.addView layer view = Dic2.add    layer entity view State.View
-        member entity.deleteView ()      = Dic2.remove       entity      State.View
-        member entity.setAnimation name =
-            match Dictionary.get entity State.Animation with
-            | ValueSome anim -> Comp.switchAnimation name anim
-            | ValueNone      -> ()
+            | ValueNone   -> ValueNone
 
-        member entity.getSheetExn name : Sheet =
-            match Dictionary.get entity State.Animation with
-            | ValueSome anim -> anim.Sheets.Sheets.[name]
-            | ValueNone      -> failwithf "%A has no SheetAnimations" entity
+    let deleteTransform entity =
+        Dictionary.remove entity State.TransformLocal
+        Dictionary.remove entity State.TransformParent
 
+    let addMovement   mov  entity = Dictionary.add    entity mov  State.Movement
+    let deleteMovement     entity = Dictionary.remove entity      State.Movement
+    let addAnimation  anim entity = Dictionary.add    entity anim State.Animation
+    let deleteAnimation    entity = Dictionary.remove entity      State.Animation
+    let addView layer view entity = Dic2.add    layer entity view State.View
+    let deleteView         entity = Dic2.remove       entity      State.View
+
+    let setAnimation name entity =
+        match Dictionary.get entity State.Animation with
+        | ValueSome anim -> Comp.switchAnimation name anim
+        | ValueNone      -> ()
+
+    let getSheetExn name entity : Sheet =
+        match Dictionary.get entity State.Animation with
+        | ValueSome anim -> anim.Sheets.Sheets.[name]
+        | ValueNone      -> failwithf "%A has no SheetAnimations" entity

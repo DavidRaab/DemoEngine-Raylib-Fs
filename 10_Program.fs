@@ -14,12 +14,12 @@ open MyGame.GameStructs
 let boxes assets =
     // black box that rotates
     let boxesOrigin = Entity.init (fun e ->
-        e.addView Layer.BG1 ({
+        e |> Entity.addView Layer.BG1 ({
             Comp.createViewfromSprite Center assets.Sprites.WhiteBox
             with Tint = Color.Black
         })
-        e.addTransform (Comp.createTransformXY 0f 0f)
-        e.addMovement {
+        e |> Entity.addTransform (Comp.createTransformXY 0f 0f)
+        e |> Entity.addMovement {
             Direction = ValueNone // ValueSome (Relative (Vector2.Right * 50f))
             Rotation  = ValueSome 90f<deg>
         }
@@ -51,15 +51,15 @@ let boxes assets =
     for x=1 to 100 do
         for y=1 to 100 do
             boxes.Add (Entity.init (fun box ->
-                box.addTransform (
+                box |> Entity.addTransform (
                     Comp.createTransformXY (float32 x * 11f) (float32 y * 11f)
                     // this cost a lot of performance because rotation/position/scale of all 3.000 boxes
                     // must be computed with a matrix calculated of the parent.
                     |> Comp.addTransformParent boxesOrigin
                 )
-                box.addView Layer.BG2 (Comp.createViewFromSheets Center assets.Box)
-                box.addAnimation (Comp.createAnimationFromSheets assets.Box)
-                box.addMovement {
+                box |> Entity.addView Layer.BG2 (Comp.createViewFromSheets Center assets.Box)
+                box |> Entity.addAnimation (Comp.createAnimationFromSheets assets.Box)
+                box |> Entity.addMovement {
                     Direction = ValueNone //ValueSome (Relative (Vector2.Right * 25f))
                     Rotation  = ValueSome (90f<deg>)
                 }
@@ -107,13 +107,13 @@ let initModel assets =
     boxes assets
 
     let arrow = Entity.init (fun e ->
-        e.addTransform (
+        e |> Entity.addTransform (
             Comp.createTransformXY 100f 100f
             // |> Transform.setRotationVector (Vector2.Right)
         )
-        e.addView Layer.FG1 (Comp.createViewfromSprite Center assets.Sprites.Arrow)
+        e |> Entity.addView Layer.FG1 (Comp.createViewfromSprite Center assets.Sprites.Arrow)
         Systems.Timer.addTimer (Timer.every (sec 0.1) () (fun _ dt ->
-            match e.getTransform () with
+            match Entity.getTransform e with
             | ValueSome t -> t.Rotation <- t.Rotation + 10f<deg>
             | ValueNone   -> ()
             State ()
@@ -121,43 +121,43 @@ let initModel assets =
     )
 
     let knight = Entity.init (fun e ->
-        e.addTransform (Comp.createTransformXY 0f 0f)
-        e.addView Layer.FG1 ({
+        e |> Entity.addTransform (Comp.createTransformXY 0f 0f)
+        e |> Entity.addView Layer.FG1 ({
             Comp.createViewFromSheets Top assets.Knight
             with Scale = (Vector2.create 2f 2f)
         })
-        e.addAnimation (Comp.createAnimationFromSheets assets.Knight)
+        e |> Entity.addAnimation (Comp.createAnimationFromSheets assets.Knight)
     )
 
     // Creates a box that is a parent of the knight and moves when Knight moves
     let box = Entity.init (fun e ->
-        e.addTransform (
+        e |> Entity.addTransform (
             Comp.createTransformXY 0f 80f
             |> Comp.addTransformParent knight
         )
-        e.addView Layer.FG1 ({
+        e |> Entity.addView Layer.FG1 ({
             Comp.createViewfromSprite Center assets.Sprites.WhiteBox
             with Tint = Color.Blue
         })
     )
 
     let sun = Entity.init (fun e ->
-        e.addTransform (Comp.createTransformXY 200f 200f)
-        e.addView Layer.FG1 ({
+        e |> Entity.addTransform (Comp.createTransformXY 200f 200f)
+        e |> Entity.addView Layer.FG1 ({
             Comp.createViewfromSprite Center assets.Sprites.WhiteBox
             with Tint = Color.Yellow
         })
         Systems.Timer.addTimer (Timer.every (sec 0.1) (Choice1Of2 0) (fun state dt ->
             match state with
             | Choice1Of2 right ->
-                e.getTransform ()
+                Entity.getTransform e
                 |> ValueOption.iter (fun t -> t.Position <-  (t.Position + (Vector2.Right * 5f)))
 
                 if right < 20
                 then State (Choice1Of2 (right+1))
                 else State (Choice2Of2 (right-1))
             | Choice2Of2 left ->
-                e.getTransform ()
+                Entity.getTransform e
                 |> ValueOption.iter (fun t -> t.Position <- (t.Position + (Vector2.Left * 5f)))
 
                 if left > 0
@@ -167,33 +167,33 @@ let initModel assets =
     )
 
     let planet1 = Entity.init (fun e ->
-        e.addTransform(
+        e |> Entity.addTransform(
             Comp.createTransformXY 0f -100f
             |> Comp.addTransformParent sun
         )
-        e.addView Layer.FG1 ({
+        e |> Entity.addView Layer.FG1 ({
             Comp.createViewfromSprite Center assets.Sprites.WhiteBox
             with Tint = Color.DarkGreen
         })
     )
 
     let planet2 = Entity.init (fun e ->
-        e.addTransform(
+        e |> Entity.addTransform(
             Comp.createTransformXY 0f -50f
             |> Comp.addTransformParent planet1
         )
-        e.addView Layer.FG1 ({
+        e |> Entity.addView Layer.FG1 ({
             Comp.createViewfromSprite Center assets.Sprites.WhiteBox
             with Tint = Color.DarkPurple
         })
     )
 
     let planet3 = Entity.init (fun e ->
-        e.addTransform(
+        e |> Entity.addTransform(
             Comp.createTransformXY 0f -20f
             |> Comp.addTransformParent planet2
         )
-        e.addView Layer.FG1 ({
+        e |> Entity.addView Layer.FG1 ({
             Comp.createViewfromSprite Center assets.Sprites.WhiteBox
             with Tint = Color.Brown
         })
@@ -202,7 +202,7 @@ let initModel assets =
     // Let stars rotate at 60 fps and 1° each frame
     Systems.Timer.addTimer (Timer.every (sec (1.0/60.0)) () (fun _ _ ->
         [sun;planet1;planet2;planet3] |> List.iter (fun p ->
-            match p.getTransform () with
+            match Entity.getTransform p with
             | ValueSome t -> t.Rotation <- (t.Rotation + 1f<deg>)
             | ValueNone   -> ()
         )
@@ -213,7 +213,7 @@ let initModel assets =
     Systems.Timer.addTimer (Timer.every (sec 0.1) (Choice1Of2 0) (fun state dt ->
         match state with
         | Choice1Of2 state ->
-            match box.getTransform () with
+            match Entity.getTransform box with
             | ValueSome t -> t.Position <- t.Position + (Vector2.create 10f 0f)
             | ValueNone   -> ()
 
@@ -221,7 +221,7 @@ let initModel assets =
             then State (Choice1Of2 (state+1))
             else State (Choice2Of2 (state+1))
         | Choice2Of2 state ->
-            match box.getTransform () with
+            match Entity.getTransform box with
             | ValueSome t -> t.Position <- t.Position + (Vector2.create -10f 0f)
             | ValueNone   -> ()
 
@@ -294,7 +294,7 @@ let update (model:Model) (deltaTime:float32) =
     let nextKnightState previousState =
         // helper-function that describes how an action is mapped to a knightState
         let action2state = function
-            | Attack      -> IsAttack (0f, Comp.getSheetDurationF (model.Knight.getSheetExn "Attack"))
+            | Attack      -> IsAttack (0f, Comp.getSheetDurationF (Entity.getSheetExn "Attack" model.Knight))
             | MoveLeft  v -> IsLeft v
             | MoveRight v -> IsRight v
             | Crouch      -> IsCrouch
@@ -312,12 +312,12 @@ let update (model:Model) (deltaTime:float32) =
             | IsCrouch       -> IsCrouch
             | IsLeft v       ->
                 // model.Knight |> State.View.iter (View.flipHorizontal true)
-                model.Knight.getTransform ()
+                Entity.getTransform model.Knight
                 |> ValueOption.iter (fun t -> t.Position <- t.Position + (v * 300f * deltaTime))
                 IsLeft v
             | IsRight v     ->
                 // model.Knight |> State.View.iter      (View.flipHorizontal false)
-                model.Knight.getTransform ()
+                Entity.getTransform model.Knight
                 |> ValueOption.iter (fun t -> t.Position <- t.Position + (v * 300f * deltaTime))
                 IsRight v
             | IsIdle -> IsIdle
@@ -330,7 +330,7 @@ let update (model:Model) (deltaTime:float32) =
                 | IsLeft _       -> "Run"
                 | IsRight _      -> "Run"
                 | IsIdle         -> "Idle"
-            model.Knight.setAnimation anim
+            Entity.setAnimation anim model.Knight
 
         // 1. Find the next state by mapping every action to a state, and get the one with the highest priority.
         //    For example, when user hits Attack button, it has higher priority as moving
