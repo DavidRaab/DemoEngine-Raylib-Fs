@@ -86,3 +86,9 @@ module Storage =
         let last = keys.Count - 1
         for idx=0 to last do
             f keys.[idx] vals.[idx]
+
+    /// get a value by a key
+    let get key storage : voption<'Value> =
+        match containsKey key storage with
+        | ValueSome idx -> ValueSome (storage.Values.[idx])
+        | ValueNone     -> ValueNone

@@ -63,4 +63,10 @@ let addedVals =
     sum
 Test.is addedVals 106 "added values"
 
+Test.is (Storage.get "abz" sto) (ValueSome   3) "abz is 3"
+Test.is (Storage.get "bar" sto) (ValueSome   2) "bar is 2"
+Test.is (Storage.get "za"  sto) (ValueSome 100) "za is 2"
+Test.is (Storage.get "zb"  sto) (ValueSome   1) "zb is 1"
+Test.is (Storage.get "foo" sto)      ValueNone  "foo does not exists"
+
 Test.doneTesting ()
