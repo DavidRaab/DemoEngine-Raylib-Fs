@@ -212,3 +212,46 @@ module FPS =
             color    = Color.Yellow
         )
 
+module GUI =
+    type Style = {
+        FontSize:             int
+        FontColor:            Color
+        BackgroundColor:      Color
+        BackgroundHoverColor: Color
+        LineColor:            Color
+        LineThickness:        float32
+    }
+
+    let mutable style = {
+        FontSize             = 12
+        FontColor            = Color.Black
+        BackgroundColor      = Color.Gray
+        BackgroundHoverColor = Color.LightGray
+        LineColor            = Color.Black
+        LineThickness        = 2f
+    }
+
+    let posInRect (pos:Vector2) (rect:Rectangle) : bool =
+        if pos.X >= rect.X
+           && pos.X <= (rect.X + rect.Width)
+           && pos.Y >= rect.Y
+           && pos.Y <= (rect.Y + rect.Height) then true else false
+
+    let mouseInRect (rect:Rectangle) =
+        posInRect (Raylib.GetMousePosition()) rect
+
+    let button (rect:Rectangle) (text:string) : bool =
+        let isHover = mouseInRect rect
+
+        if isHover
+        then Raylib.DrawRectangleRec(rect, style.BackgroundHoverColor)
+        else Raylib.DrawRectangleRec(rect, style.BackgroundColor)
+
+        let yText = rect.Y + (rect.Height / 2f - (float32 style.FontSize / 2f))
+        let xText = rect.X + 5f
+        Raylib.DrawText(text, int xText, int yText, style.FontSize, style.FontColor)
+        Raylib.DrawRectangleLinesEx(rect, 2f, style.LineColor)
+
+        if CBool.op_Implicit <| (Raylib.IsMouseButtonPressed(Raylib_cs.MouseButton.Left))
+        then isHover
+        else false

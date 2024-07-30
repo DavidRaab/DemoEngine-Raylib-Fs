@@ -10,8 +10,11 @@ open MyGame.Timer
 open MyGame.Assets
 open MyGame.GameStructs
 
+// Some global variables
+let mutable assets : Assets = Unchecked.defaultof<_>
+
 // Called in initModel - Sets up all the boxes
-let boxes assets =
+let boxes () =
     // black box that rotates
     let boxesOrigin = Entity.init (fun e ->
         e |> Entity.addView Layer.BG1 ({
@@ -79,7 +82,7 @@ let boxes assets =
     let rng = System.Random ()
     Systems.Timer.addTimer (Timer.every (sec 0.1) 0 (fun idx dt ->
         // changes direction and rotation of 200 boxes every call to a new random direction/rotation
-        let updatesPerCall = 200
+        let updatesPerCall = 1000
         let last = boxes.Count - 1
         let max = if idx+updatesPerCall > last then last else idx+updatesPerCall
         for i=idx to max do
@@ -99,12 +102,12 @@ let boxes assets =
         else State max
     ))
 
-    ()
+    boxes
 
 
 // Initialize the Game Model
-let initModel assets =
-    boxes assets
+let initModel () =
+    let boxes = boxes ()
 
     let arrow = Entity.init (fun e ->
         e |> Entity.addTransform (
@@ -239,6 +242,8 @@ let initModel assets =
     let gameState = {
         Knight         = knight
         MouseRectangle = NoRectangle
+        Rng            = System.Random()
+        Boxes          = boxes
     }
     gameState
 
@@ -476,6 +481,39 @@ let mutable target     = Unchecked.defaultof<RenderTexture2D>
 let mutable sourceRect = Unchecked.defaultof<Rectangle>
 let mutable destRect   = Unchecked.defaultof<Rectangle>
 
+let drawUI model =
+    FPS.draw ()
+
+    let mousePos = Raylib.GetMousePosition()
+    Systems.Drawing.mousePosition  (mousePos) 20 (Vector2.create 0f 320f)
+    Systems.Drawing.trackPosition  model.Knight 20 (Vector2.create 0f 340f)
+
+    let mutable visibleCount = 0
+    for layer in State.View.Data.Keys do
+        visibleCount <- visibleCount + State.View.Data.[layer].Count
+    Raylib.DrawText(
+        text     = String.Format("Visible: {0} {1}", visibleCount, State.drawed),
+        posX     = 250,
+        posY     = 3,
+        fontSize = 20,
+        color    = Color.Yellow
+    )
+
+    let inline rect x y w h =
+        Rectangle(x,y,w,h)
+
+    if GUI.button (rect 500f 330f 90f 24f) "Spawn" then
+        for i=1 to 100 do
+            Entity.init (fun e ->
+                let x,y =
+                    model.Rng.NextSingle() * 2000f - 1000f,
+                    model.Rng.NextSingle() * 2000f - 1000f
+                e |> Entity.addTransform (Comp.createTransformXY x y)
+                e |> Entity.addView Layer.BG1 (Comp.createViewFromSheets Center assets.Box)
+                model.Boxes.Add(e)
+            ) |> ignore
+
+
 let draw (model:Model) (deltaTime:float32) =
     beginTextureMode target (fun () ->
         Raylib.ClearBackground(Color.DarkBlue)
@@ -498,21 +536,7 @@ let draw (model:Model) (deltaTime:float32) =
 
         // Draw UI
         beginMode2D State.uiCamera (fun () ->
-            FPS.draw ()
-            let mousePos = Raylib.GetMousePosition()
-            Systems.Drawing.mousePosition    (mousePos) 20 (Vector2.create 0f 320f)
-            Systems.Drawing.trackPosition  model.Knight 20 (Vector2.create 0f 340f)
-
-            let mutable visibleCount = 0
-            for layer in State.View.Data.Keys do
-                visibleCount <- visibleCount + State.View.Data.[layer].Count
-            Raylib.DrawText(
-                text     = String.Format("Visible: {0} {1}", visibleCount, State.drawed),
-                posX     = 250,
-                posY     = 3,
-                fontSize = 20,
-                color    = Color.Yellow
-            )
+            drawUI model
         )
     )
 
@@ -571,8 +595,8 @@ let main argv =
     Systems.View.halfY  <- float32 virtualHeight / 2f
 
     // Load Game Assets and initialize first Model
-    let assets        = Assets.load ()
-    let mutable model = initModel assets
+    assets  <- Assets.load ()
+    let mutable model = initModel ()
 
     for i=0 to 3 do
         if CBool.op_Implicit (Raylib.IsGamepadAvailable(i)) then

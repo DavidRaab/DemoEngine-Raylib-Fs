@@ -17,6 +17,8 @@ type MouseRectangle =
 type Model = {
     Knight:         Entity
     MouseRectangle: MouseRectangle
+    Rng:            System.Random
+    Boxes:          ResizeArray<Entity>
 }
 
 type KnightState =
