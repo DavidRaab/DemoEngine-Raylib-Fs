@@ -1,4 +1,4 @@
-namespace MyGame
+namespace Storage
 
 module ResizeArray =
     /// Binary Search for an ResizeArray

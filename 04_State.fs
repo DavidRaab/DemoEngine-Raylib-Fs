@@ -1,10 +1,12 @@
 namespace MyGame.State
 open Raylib_cs
 open Dic2
+open Storage
 open MyGame
 open MyGame.DataTypes
 
 type Dictionary<'a,'b> = System.Collections.Generic.Dictionary<'a,'b>
+
 
 module State =
     /// Stores information on how many DrawTexture() calls
@@ -17,8 +19,8 @@ module State =
 
     // State variables
     // let Transform = Dic2.create<TransformState, Entity, Transform> ()
-    let TransformLocal  = Dictionary<Entity,Transform> ()
-    let TransformParent = Dictionary<Entity,Transform> ()
-    let Movement        = Dictionary<Entity,Movement>  ()
-    let Animation       = Dictionary<Entity,Animation> ()
+    let TransformLocal  = Storage.create<Entity,Transform> ()
+    let TransformParent = Storage.create<Entity,Transform> ()
+    let Movement        = Storage.create<Entity,Movement>  ()
+    let Animation       = Storage.create<Entity,Animation> ()
     let View            = Dic2.create<Layer, Entity, View> ()

@@ -2,6 +2,7 @@ namespace MyGame.Systems
 open Raylib_cs
 open System.Numerics
 open Dic2
+open Storage
 open MyGame
 open MyGame.Extensions
 open MyGame.DataTypes
@@ -37,7 +38,7 @@ module Transform =
 
     /// Updates all Global fields of every Transform with a Parent
     let update () =
-        for KeyValue(_,t) in State.TransformParent do
+        for t in State.TransformParent.Values do
             match t with
             | Local  _ -> ()
             | Parent p ->
@@ -135,7 +136,7 @@ module View =
 // Moves those who should be moved
 module Movement =
     let update (deltaTime:float32) =
-        for KeyValue(entity,mov) in State.Movement do
+        State.Movement |> Storage.iter (fun entity mov ->
             match Entity.getTransform entity with
             | ValueSome t ->
                 match mov.Direction with
@@ -153,6 +154,7 @@ module Movement =
                     | Parent t -> t.Rotation <- t.Rotation + (rot * deltaTime)
             | ValueNone ->
                 ()
+        )
 
 module Timer =
     let mutable state = ResizeArray<Timed<unit>>()
@@ -170,7 +172,7 @@ module Timer =
 module Animations =
     let update (deltaTime:float32) =
         let deltaTime = TimeSpan.FromSeconds(float deltaTime)
-        for KeyValue(entity,anim) in State.Animation do
+        State.Animation |> Storage.iter (fun entity anim ->
             anim.ElapsedTime <- anim.ElapsedTime + deltaTime
             if anim.ElapsedTime > anim.CurrentSheet.FrameDuration then
                 anim.ElapsedTime <- anim.ElapsedTime - anim.CurrentSheet.FrameDuration
@@ -181,7 +183,7 @@ module Animations =
                     | ValueSome sprite -> view.Sprite <- sprite
                     | ValueNone        -> ()
                 | ValueNone          -> ()
-
+        )
 
 module Drawing =
     let mousePosition mousePos fontSize (whereToDraw:Vector2) =

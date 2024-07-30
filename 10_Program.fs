@@ -89,7 +89,7 @@ let boxes () =
             // 10% of all boxes will move to world position 0,0 with 10px per second
             // all other boxes move in a random direction at 25px per second
             let box = boxes.[i]
-            State.Movement |> Dictionary.add box {
+            box |> Entity.addMovement {
                 Direction = ValueSome(
                     if   rng.NextSingle() < 0.1f
                     then Absolute (Vector2.Zero,10f)

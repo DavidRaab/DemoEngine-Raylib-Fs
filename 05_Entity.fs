@@ -1,5 +1,6 @@
 namespace MyGame.Entity
 open Dic2
+open Storage
 open MyGame
 open MyGame.DataTypes
 open MyGame.Components
@@ -28,38 +29,38 @@ module Entity =
     let addTransform t entity =
         match t with
         | Local _ ->
-            Dictionary.remove entity   State.TransformParent
-            Dictionary.add    entity t State.TransformLocal
+            Storage.remove entity   State.TransformParent
+            Storage.insert entity t State.TransformLocal
         | Parent _ ->
-            Dictionary.remove entity   State.TransformLocal
-            Dictionary.add    entity t State.TransformParent
+            Storage.remove entity   State.TransformLocal
+            Storage.insert entity t State.TransformParent
 
     let getTransform entity =
-        match Dictionary.get entity State.TransformLocal with
+        match Storage.get entity State.TransformLocal with
         | ValueSome t -> ValueSome t
         | ValueNone   ->
-            match Dictionary.get entity State.TransformParent with
+            match Storage.get entity State.TransformParent with
             | ValueSome t -> ValueSome t
             | ValueNone   -> ValueNone
 
     let deleteTransform entity =
-        Dictionary.remove entity State.TransformLocal
-        Dictionary.remove entity State.TransformParent
+        Storage.remove entity State.TransformLocal
+        Storage.remove entity State.TransformParent
 
-    let addMovement   mov  entity = Dictionary.add    entity mov  State.Movement
-    let deleteMovement     entity = Dictionary.remove entity      State.Movement
-    let addAnimation  anim entity = Dictionary.add    entity anim State.Animation
-    let deleteAnimation    entity = Dictionary.remove entity      State.Animation
+    let addMovement   mov  entity = Storage.insert entity mov  State.Movement
+    let deleteMovement     entity = Storage.remove entity      State.Movement
+    let addAnimation  anim entity = Storage.insert entity anim State.Animation
+    let deleteAnimation    entity = Storage.remove entity      State.Animation
     let addView layer view entity = Dic2.add    layer entity view State.View
     let deleteView         entity = Dic2.remove       entity      State.View
 
     let setAnimation name entity =
-        match Dictionary.get entity State.Animation with
+        match Storage.get entity State.Animation with
         | ValueSome anim -> Comp.switchAnimation name anim
         | ValueNone      -> ()
 
     let getSheetExn name entity : Sheet =
-        match Dictionary.get entity State.Animation with
+        match Storage.get entity State.Animation with
         | ValueSome anim -> anim.Sheets.Sheets.[name]
         | ValueNone      -> failwithf "%A has no SheetAnimations" entity
 
