@@ -82,7 +82,7 @@ let boxes () =
     let rng = System.Random ()
     Systems.Timer.addTimer (Timer.every (sec 0.1) 0 (fun idx dt ->
         // changes direction and rotation of 200 boxes every call to a new random direction/rotation
-        let updatesPerCall = 1000
+        let updatesPerCall = boxes.Count / 10
         let last = boxes.Count - 1
         let max = if idx+updatesPerCall > last then last else idx+updatesPerCall
         for i=idx to max do
@@ -502,7 +502,7 @@ let drawUI model =
     let inline rect x y w h =
         Rectangle(x,y,w,h)
 
-    if GUI.button (rect 500f 330f 90f 24f) "Spawn" then
+    if Gui.button (rect 510f 330f 45f 24f) "Spawn" then
         for i=1 to 100 do
             Entity.init (fun e ->
                 let x,y =
@@ -513,6 +513,13 @@ let drawUI model =
                 model.Boxes.Add(e)
             ) |> ignore
 
+    if Gui.button (rect 560f 330f 60f 24f) "Destroy" then
+        for i=1 to 100 do
+            if model.Boxes.Count > 0 then
+                let idx = model.Rng.Next(model.Boxes.Count)
+                let e = model.Boxes.[idx]
+                model.Boxes.RemoveAt(idx)
+                Entity.destroy e
 
 let draw (model:Model) (deltaTime:float32) =
     beginTextureMode target (fun () ->

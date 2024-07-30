@@ -212,7 +212,7 @@ module FPS =
             color    = Color.Yellow
         )
 
-module GUI =
+module Gui =
     type Style = {
         FontSize:             int
         FontColor:            Color
