@@ -248,10 +248,58 @@ let mutable knightState = IsIdle
 let mutable resetInput = false
 let fixedUpdateTiming = 1.0f / 60.0f
 let fixedUpdate model (deltaTime:float32) =
-    Systems.Timer.update      deltaTime
-    Systems.Movement.update   deltaTime
-    Systems.Transform.update ()
+    Systems.Timer.update deltaTime
+    Systems.Movement.update deltaTime
     Systems.Animations.update deltaTime
+    Systems.Transform.update ()
+
+    (** At the moment multi-threading basically has no improvement. Most work
+        is done in Movement and Transform, and both of those cannot
+        run in parallel because they both update Transforms. So the
+        multi-threading code must process both of those in order. Only thing
+        what async does is put computation onto another thread while main
+        thread waits for finish.
+
+        In order to really get performance improvement I need to make the
+        systems itself run in parallel. Here is one advantage of an Array.
+        On an array different Threads could update different portions of
+        the array indexes. But with a Dictionary, what i use currently, this
+        is not achiveable. Or i write my own Dictionary implementation with
+        access to the internal array that a Dictionary also uses.
+    *)
+    (*
+    let multi = async {
+        // Start those in parallel
+        let! timer = Async.StartChild (async {
+            do! Async.SwitchToThreadPool ()
+            Systems.Timer.update deltaTime
+        })
+        let! mov   = Async.StartChild (async {
+            do! Async.SwitchToThreadPool ()
+            Systems.Movement.update deltaTime
+        })
+        let! anim  = Async.StartChild (async {
+            do! Async.SwitchToThreadPool ()
+            Systems.Animations.update deltaTime
+        })
+
+        // wait for timer and mov to finish
+        do! timer
+        do! mov
+
+        // then start transform
+        let! trans = Async.StartChild (async {
+            do! Async.SwitchToThreadPool ()
+            Systems.Transform.update ()
+        })
+
+        // Wait for transform and animation to finish
+        do! trans
+        do! anim
+    }
+    Async.RunSynchronously multi
+    *)
+
     model
 
 
