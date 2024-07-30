@@ -7,12 +7,10 @@ open MyGame.State
 
 module Entity =
     let mutable private counter = 0
-    let private entities = ResizeArray<Entity>()
 
     let create () =
         counter <- counter + 1
         let e = Entity counter
-        entities.Add e
         e
 
     let init f =
@@ -26,9 +24,6 @@ module Entity =
             f idx e
             yield e
     ]
-
-    let all () =
-        entities :> seq<Entity>
 
     let addTransform t entity =
         match t with
@@ -67,3 +62,10 @@ module Entity =
         match Dictionary.get entity State.Animation with
         | ValueSome anim -> anim.Sheets.Sheets.[name]
         | ValueNone      -> failwithf "%A has no SheetAnimations" entity
+
+    /// Destroys an entity by removing all Components
+    let destroy entity =
+        deleteTransform entity
+        deleteView entity
+        deleteMovement entity
+        deleteAnimation entity
