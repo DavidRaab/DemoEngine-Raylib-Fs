@@ -39,26 +39,26 @@ let boxes () =
     //
     //                                All     | Culling
     //                               ---------+----------
-    //  3000 boxes without parent -> 2050 fps | 2700 fps
-    //  6000 boxes without parent -> 1100 fps | 1950 fps
+    //  3000 boxes without parent -> 2050 fps | 2600 fps (2000 obj)
+    //  6000 boxes without parent -> 1100 fps | 1750 fps
     // 10000 boxes without parent ->  660 fps | 1550 fps
-    // 40000 boxes without parent ->  160 fps |  900 fps
-    // 90000 boxes without parent ->   90 fps |  450 fps
+    // 40000 boxes without parent ->  145 fps |  750 fps
+    // 90000 boxes without parent ->   50 fps |  320 fps
     //                                        |
-    //  3000 boxes with parent    -> 2000 fps | 2500 fps
+    //  3000 boxes with parent    -> 1950 fps | 2600 fps (2000 obj)
     //  6000 boxes with parent    -> 1050 fps | 2000 fps
-    // 10000 boxes with parent    ->  630 fps | 1500 fps
-    // 40000 boxes with parent    ->  130 fps |  600 fps
-    // 90000 boxes with parent    ->   45 fps |  160 fps
+    // 10000 boxes with parent    ->  615 fps | 1200 fps
+    // 40000 boxes with parent    ->  120 fps |  600 fps
+    // 90000 boxes with parent    ->   45 fps |   70 fps
     //
     for x=1 to 100 do
-        for y=1 to 100 do
+        for y=1 to 30 do
             boxes.Add (Entity.init (fun box ->
                 box |> Entity.addTransform (
                     Comp.createTransformXY (float32 x * 11f) (float32 y * 11f)
                     // this cost a lot of performance because rotation/position/scale of all 3.000 boxes
                     // must be computed with a matrix calculated of the parent.
-                    |> Comp.addTransformParent boxesOrigin
+                    // |> Comp.addTransformParent boxesOrigin
                 )
                 box |> Entity.addView Layer.BG2 (Comp.createViewFromSheets Center assets.Box)
                 box |> Entity.addAnimation (Comp.createAnimationFromSheets assets.Box)

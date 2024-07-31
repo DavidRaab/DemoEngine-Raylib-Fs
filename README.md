@@ -38,17 +38,17 @@ parent object.
 
 |                            | All Visible | Culling (~3000)
 | :------------------------- | --------:   | -------:
-|  3000 boxes without parent | 2050 fps    | 2700 fps
-|  6000 boxes without parent | 1120 fps    | 1950 fps
-| 10000 boxes without parent |  690 fps    | 1550 fps
-| 40000 boxes without parent |  180 fps    |  900 fps
-| 90000 boxes without parent |   90 fps    |  450 fps
+|  3000 boxes without parent | 2050 fps    | 2600 fps
+|  6000 boxes without parent | 1100 fps    | 1750 fps
+| 10000 boxes without parent |  660 fps    | 1550 fps
+| 40000 boxes without parent |  145 fps    |  750 fps
+| 90000 boxes without parent |   50 fps    |  320 fps
 |                            |             |
-|  3000 boxes with parent    | 1700 fps    | 2500 fps
-|  6000 boxes with parent    |  900 fps    | 1300 fps
-| 10000 boxes with parent    |  550 fps    |  800 fps
-| 40000 boxes with parent    |  130 fps    |  300 fps
-| 90000 boxes with parent    |   60 fps    |  190 fps
+|  3000 boxes with parent    | 1950 fps    | 2600 fps
+|  6000 boxes with parent    | 1050 fps    | 2000 fps
+| 10000 boxes with parent    |  615 fps    | 1200 fps
+| 40000 boxes with parent    |  120 fps    |  600 fps
+| 90000 boxes with parent    |   45 fps    |   70 fps
 
 Because of Culling it's hard to "measure" anything as framerate greatly
 depends on how much is seen on the screen. For example 10,000 boxes
