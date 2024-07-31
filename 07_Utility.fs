@@ -247,8 +247,9 @@ module Gui =
         then Raylib.DrawRectangleRec(rect, style.BackgroundHoverColor)
         else Raylib.DrawRectangleRec(rect, style.BackgroundColor)
 
+        let tw = float32 <| Raylib.MeasureText(text, style.FontSize)
         let yText = rect.Y + (rect.Height / 2f - (float32 style.FontSize / 2f))
-        let xText = rect.X + 5f
+        let xText = rect.X + (rect.Width - tw) / 2f
         Raylib.DrawText(text, int xText, int yText, style.FontSize, style.FontColor)
         Raylib.DrawRectangleLinesEx(rect, 2f, style.LineColor)
 

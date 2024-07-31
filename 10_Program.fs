@@ -502,7 +502,7 @@ let drawUI model =
     let inline rect x y w h =
         Rectangle(x,y,w,h)
 
-    if Gui.button (rect 510f 330f 45f 24f) "Spawn" then
+    if Gui.button (rect 510f 330f 50f 24f) "Spawn" then
         for i=1 to 100 do
             Entity.init (fun e ->
                 let x,y =
@@ -513,7 +513,7 @@ let drawUI model =
                 model.Boxes.Add(e)
             ) |> ignore
 
-    if Gui.button (rect 560f 330f 60f 24f) "Destroy" then
+    if Gui.button (rect 570f 330f 60f 24f) "Destroy" then
         for i=1 to 100 do
             if model.Boxes.Count > 0 then
                 let idx = model.Rng.Next(model.Boxes.Count)
