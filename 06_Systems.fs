@@ -41,7 +41,7 @@ module Transform =
     let update () =
         Parallel.For(0, (State.TransformParent.Data.Count), (fun idx ->
             // Get a Transform
-            let t = State.TransformParent.Data.[idx]
+            let struct (_,t) = State.TransformParent.Data.[idx]
             // When it is Local we don't need to calculate anything. But
             // TransformParent should anyway never contain a Local.
             match t with
@@ -145,8 +145,7 @@ module View =
 module Movement =
     let update (deltaTime:float32) =
         Parallel.For(0, State.Movement.Data.Count, (fun idx ->
-            let entity = State.Movement.IndexToKey.[idx]
-            let mov    = State.Movement.Data.[idx]
+            let struct (entity,mov) = State.Movement.Data.[idx]
             match Entity.getTransform entity with
             | ValueSome t ->
                 match mov.Direction with

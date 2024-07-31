@@ -49,7 +49,7 @@ for i=1 to amount do
     Storage.insert i (createTransformS ()) stoS
 
 // just iterate through both and count items
-let (countP, timeP) = countIt 1000 (fun () ->
+let (countP, timeP) = countIt 10_000 (fun () ->
     let mutable count = 0f
     stoP |> Storage.iter (fun k t ->
         count <- count + t.Position.X
@@ -57,7 +57,7 @@ let (countP, timeP) = countIt 1000 (fun () ->
     count
 )
 
-let (countS, timeS) = countIt 1000 (fun () ->
+let (countS, timeS) = countIt 10_000 (fun () ->
     let mutable count = 0f
     stoS |> Storage.iter (fun k t ->
         count <- count + t.Position.X

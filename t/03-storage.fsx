@@ -1,72 +1,90 @@
 #!/usr/bin/env -S dotnet fsi
 
-#r "nuget:Raylib-cs"
 #load "Test.fsx"
-#load "../01_Extensions.fs"
 #load "../Lib_Storage.fs"
+
 open Test
-open MyGame
 open Storage
 
-// function for checking the content of Storage
-let checkContent name data content =
-    let mutable idx  = 0
-    let mutable pass = true
-    if Seq.length content = Storage.length data then
-        for key,value in content do
-            if data.Keys.[idx] <> key then
-                printfn "# key mismatch at idx %d: Expecting: %A Got: %A" idx key data.Keys.[idx]
-                pass <- false
-            if data.Values.[idx] <> value then
-                printfn "# value mismatch at idx %d: Expecting: %A Got: %A" idx value data.Values.[idx]
-                pass <- false
-            idx <- idx + 1
-    else
-        printfn "# Storage has not required length. Skipping key/value tests."
-        pass <- false
-    if pass
-    then Test.pass name
-    else Test.fail name
+let amount = 50_000
+let rng    = System.Random()
 
-// Build and Test Storage container
-let sto = Storage.create<string,int>()
-checkContent "empty" sto []
+let countIs amount (storage:Storage.T<_,_>) name =
+    Test.is (storage.Data.Count)       amount (sprintf "%s data Count is %d" name amount)
+    Test.is (storage.KeyToIndex.Count) amount (sprintf "%s KeyToIndex Count is %d" name amount)
 
-sto |> Storage.insert "foo" 1
-sto |> Storage.insert "bar" 2
-sto |> Storage.insert "abz" 3
-checkContent "init" sto ["abz", 3; "bar", 2; "foo", 1]
+// generate storage
+let storage = Storage.create ()
+for i=1 to amount do
+    Storage.insert i (rng.NextDouble ()) storage
 
-sto |> Storage.insert "foo" 5
-checkContent "overwritten foo" sto ["abz", 3; "bar", 2; "foo", 5]
+countIs amount storage "init"
 
-sto |> Storage.insert "aaa" 11
-checkContent "added aaa" sto ["aaa",11; "abz", 3; "bar", 2; "foo", 5]
+// get value for index 10
+let valueOf10   = (Storage.get 10    storage).Value
+let valueOfLast = (Storage.get 50000 storage).Value
 
-sto |> Storage.insert "za" 100
-sto |> Storage.insert "zb" 1
-checkContent "adding to end" sto ["aaa",11; "abz", 3; "bar", 2; "foo", 5; "za",100; "zb",1]
+Test.is (storage.Data.[9])           (10,valueOf10) "check element 10"
+Test.is (storage.Data.[49_999]) (50000,valueOfLast) "check element 50000"
+Test.is (Storage.getIndex    10 storage) (ValueSome 9)     "index of 10"
+Test.is (Storage.getIndex 50000 storage) (ValueSome 49999) "index of 50000"
 
-sto |> Storage.remove "aaa"
-sto |> Storage.remove "foo"
-checkContent "removing entries" sto ["abz", 3; "bar", 2; "za",100; "zb",1]
+// Removes one element
+Storage.remove 10 storage
 
-let concatString =
-    let mutable str = ""
-    sto |> Storage.iter (fun k v -> str <- str + k)
-    str
-Test.is concatString "abzbarzazb" "keys concatenated"
+countIs (amount-1) storage "one removed"
+Test.is (storage.Data.[9]) (50000,valueOfLast) "last moved in ereased slot"
+Test.is (Storage.getIndex 50000 storage) (ValueSome 9) "Moved to index 9"
+Test.is (Storage.getIndex    10 storage)   (ValueNone) "10 removed"
 
-let addedVals =
-    let mutable sum = 0
-    sto |> Storage.iter (fun k v -> sum <- sum + v)
-    sum
-Test.is addedVals 106 "added values"
+// Add element 10 back
+Storage.insert 10 valueOf10 storage
 
-Test.is (Storage.get "abz" sto) (ValueSome   3) "abz is 3"
-Test.is (Storage.get "bar" sto) (ValueSome   2) "bar is 2"
-Test.is (Storage.get "za"  sto) (ValueSome 100) "za is 2"
-Test.is (Storage.get "zb"  sto) (ValueSome   1) "zb is 1"
-Test.is (Storage.get "foo" sto)      ValueNone  "foo does not exists"
+countIs amount storage "50000"
+Test.is (storage.Data.[49999]) (10,valueOf10) "added to end"
+Test.is (Storage.getIndex 50000 storage) (ValueSome 9) "stays at index 9"
+Test.is (Storage.getIndex    10 storage) (ValueSome 49999) "index of 10"
+Test.is (Storage.get 10 storage)    (ValueSome valueOf10) "valueof10"
+Test.is (Storage.get 50000 storage) (ValueSome valueOfLast) "valueofLast"
+
+// overwrite 10 with new value
+Storage.insert 10 (-valueOf10) storage
+countIs amount storage "not added - overwritten"
+Test.is (storage.Data.[49999]) (10,-valueOf10) "added to end"
+Test.is (Storage.getIndex 10 storage) (ValueSome 49999) "index of 10"
+
+// delete last element in Data that is now 10
+Storage.remove 10 storage
+countIs (amount-1) storage "delete last"
+Test.is (Storage.get 10 storage) (ValueNone) "10 not in storage"
+
+// fetch keys,values from 101 to 200 and delete them
+let kv = [
+    for key in 101 .. 200 do
+        let value = (Storage.get key storage).Value
+        Storage.remove key storage
+        yield key,value
+]
+countIs (amount-101) storage "deleted 100"
+
+// now re-add the elements
+for (key,value) in kv do
+    Storage.insert key value storage
+
+countIs (amount-1) storage "re-added 100"
+
+// check all values
+for (key,value) in kv do
+    Test.is (Storage.get key storage) (ValueSome value) (sprintf "Value of %d" key)
+
+// re-add 10
+Storage.insert 10 valueOf10 storage
+
+countIs amount storage "added 10 back"
+Test.is (Storage.getIndex 10 storage) (ValueSome 49999) "last element"
+Test.is (Storage.get 10 storage)      (ValueSome valueOf10) "value of 10"
+Test.is (Storage.get 50000 storage)   (ValueSome valueOfLast) "last did not change"
+Test.is (Storage.getIndex 50000 storage) (ValueSome 9) "50000 still at index 9"
+
 
 Test.doneTesting ()
