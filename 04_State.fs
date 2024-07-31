@@ -9,6 +9,9 @@ type Dictionary<'a,'b> = System.Collections.Generic.Dictionary<'a,'b>
 
 
 module State =
+    /// Initialized Random Number Generator to be used
+    let rng = System.Random ()
+
     /// Stores information on how many DrawTexture() calls
     /// happened in draw. Resets every frame.
     let mutable drawed   = 0

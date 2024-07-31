@@ -79,7 +79,6 @@ let boxes () =
     // 40,000 objects immediately when it runs. But anyway with changed implementation
     // i couldn't notice any stutter. But also could anyway change it to a mutable
     // structure if needed.
-    let rng = System.Random ()
     Systems.Timer.addTimer (Timer.every (sec 0.1) 0 (fun idx dt ->
         // changes direction and rotation of 200 boxes every call to a new random direction/rotation
         let updatesPerCall = boxes.Count / 10
@@ -91,11 +90,11 @@ let boxes () =
             let box = boxes.[i]
             box |> Entity.addMovement {
                 Direction = ValueSome(
-                    if   rng.NextSingle() < 0.1f
+                    if   State.rng.NextSingle() < 0.1f
                     then Absolute (Vector2.Zero,10f)
                     else Relative (Vector2.randomDirection 25f)
                 )
-                Rotation = ValueSome(rng.NextSingle() * 60f<deg> - 30f<deg>)
+                Rotation = ValueSome(State.rng.NextSingle() * 60f<deg> - 30f<deg>)
             }
         if max = last
         then State 0
@@ -242,7 +241,6 @@ let initModel () =
     let gameState = {
         Knight         = knight
         MouseRectangle = NoRectangle
-        Rng            = System.Random()
         Boxes          = boxes
     }
     gameState
@@ -506,8 +504,8 @@ let drawUI model =
         for i=1 to 100 do
             Entity.init (fun e ->
                 let x,y =
-                    model.Rng.NextSingle() * 2000f - 1000f,
-                    model.Rng.NextSingle() * 2000f - 1000f
+                    State.rng.NextSingle() * 2000f - 1000f,
+                    State.rng.NextSingle() * 2000f - 1000f
                 e |> Entity.addTransform (Comp.createTransformXY x y)
                 e |> Entity.addView Layer.BG1 (Comp.createViewFromSheets Center assets.Box)
                 model.Boxes.Add(e)
@@ -516,7 +514,7 @@ let drawUI model =
     if Gui.button (rect 570f 330f 60f 24f) "Destroy" then
         for i=1 to 100 do
             if model.Boxes.Count > 0 then
-                let idx = model.Rng.Next(model.Boxes.Count)
+                let idx = State.rng.Next(model.Boxes.Count)
                 let e = model.Boxes.[idx]
                 model.Boxes.RemoveAt(idx)
                 Entity.destroy e

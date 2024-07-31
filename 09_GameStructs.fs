@@ -7,7 +7,7 @@ open MyGame.Utility
 // Shorter Alias for KeyboardKey
 type Key = Raylib_cs.KeyboardKey
 
-// Model
+// State Machine for Mouse Rectangle Drawing
 type MouseRectangle =
     | NoRectangle
     | StartRectangle of Vector2
@@ -17,7 +17,6 @@ type MouseRectangle =
 type Model = {
     Knight:         Entity
     MouseRectangle: MouseRectangle
-    Rng:            System.Random
     Boxes:          ResizeArray<Entity>
 }
 
