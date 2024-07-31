@@ -12,6 +12,7 @@ open MyGame.Entity
 open MyGame.Timer
 
 type TimeSpan = System.TimeSpan
+type Parallel = System.Threading.Tasks.Parallel
 
 // Transform System updates the Global_ fields when a Parent is set
 module Transform =
@@ -38,9 +39,12 @@ module Transform =
 
     /// Updates all Global fields of every Transform with a Parent
     let update () =
-        for t in State.TransformParent.Data do
+        Parallel.For(0, (State.TransformParent.Data.Count), (fun idx ->
+            // Get a Transform
+            let t = State.TransformParent.Data.[idx]
+            // When it is Local we don't need to calculate anything. But
+            // TransformParent should anyway never contain a Local.
             match t with
-            | Local  _ -> ()
             | Parent p ->
                 match calculateTransform t with
                 | ValueNone -> ()
@@ -48,6 +52,10 @@ module Transform =
                     p.GlobalPosition <- pos
                     p.GlobalRotation <- rot
                     p.GlobalScale    <- scale
+            | Local  _ -> ()
+        ))
+        |> ignore
+
 
 // View System draws entity
 module View =
@@ -136,7 +144,9 @@ module View =
 // Moves those who should be moved
 module Movement =
     let update (deltaTime:float32) =
-        State.Movement |> Storage.iter (fun entity mov ->
+        Parallel.For(0, State.Movement.Data.Count, (fun idx ->
+            let entity = State.Movement.IndexToKey.[idx]
+            let mov    = State.Movement.Data.[idx]
             match Entity.getTransform entity with
             | ValueSome t ->
                 match mov.Direction with
@@ -154,7 +164,8 @@ module Movement =
                     | Parent t -> t.Rotation <- t.Rotation + (rot * deltaTime)
             | ValueNone ->
                 ()
-        )
+        ))
+        |> ignore
 
 module Timer =
     let mutable state = ResizeArray<Timed<unit>>()
