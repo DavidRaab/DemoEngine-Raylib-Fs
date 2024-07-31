@@ -7,22 +7,6 @@ type Dictionary<'a,'b> = System.Collections.Generic.Dictionary<'a,'b>
 type TimeSpan          = System.TimeSpan
 type Matrix            = Matrix4x4
 
-module Array =
-    let bsearch (value:'a) (array:array<'a>) : voption<int> =
-        let rec findRec lpos rpos =
-            if lpos > rpos then
-                ValueNone
-            else
-                let mid   = lpos + ((rpos - lpos) / 2)
-                let check = array.[mid]
-                if value < check then
-                    findRec lpos (mid-1)
-                else if value > check then
-                    findRec (mid+1) rpos
-                else
-                    ValueSome mid
-        findRec 0 (array.Length-1)
-
 [<AutoOpen>]
 module Extensions =
     // Milliseconds
