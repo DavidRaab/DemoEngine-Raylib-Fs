@@ -38,7 +38,7 @@ module Transform =
 
     /// Updates all Global fields of every Transform with a Parent
     let update () =
-        for t in State.TransformParent.Values do
+        for t in State.TransformParent.Data do
             match t with
             | Local  _ -> ()
             | Parent p ->

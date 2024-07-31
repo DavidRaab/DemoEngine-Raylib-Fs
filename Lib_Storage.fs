@@ -1,94 +1,89 @@
 namespace Storage
 
-module ResizeArray =
-    /// Binary Search for an ResizeArray
-    let bsearch (value:'a) (array:ResizeArray<'a>) : voption<int> =
-        let rec findRec lpos rpos =
-            if lpos > rpos then
-                ValueNone
-            else
-                let mid   = lpos + ((rpos - lpos) / 2)
-                let check = array.[mid]
-                if value < check then
-                    findRec lpos (mid-1)
-                else if value > check then
-                    findRec (mid+1) rpos
-                else
-                    ValueSome mid
-        findRec 0 (array.Count-1)
+type Dictionary<'a,'b> = System.Collections.Generic.Dictionary<'a,'b>
+
+type Storage<'a,'b> = {
+    KeyToIndex: Dictionary<'a,int>
+    IndexToKey: Dictionary<int,'a>
+    Data:       ResizeArray<'b>
+}
 
 module Storage =
-    type T<'Key,'Value> = {
-        Keys:   ResizeArray<'Key>
-        Values: ResizeArray<'Value>
+    let create<'Key,'Value when 'Key:equality> () : Storage<'Key,'Value> = {
+        KeyToIndex = Dictionary<'Key,int>()
+        IndexToKey = Dictionary<int,'Key>()
+        Data       = ResizeArray<'Value>()
     }
 
-    let create<'Key,'Value> () = {
-        Keys   = ResizeArray<'Key>()
-        Values = ResizeArray<'Value>()
-    }
-
-    /// returns the amount of elements stored
     let length storage =
-        storage.Keys.Count
+        storage.Data.Count
 
-    /// Checks if a key exists and returns the index if present
-    let containsKey key storage : voption<int> =
-        ResizeArray.bsearch key storage.Keys
+    let contains key (storage:Storage<'Key,'value>) : bool =
+        if storage.KeyToIndex.ContainsKey(key) then true else false
 
-    /// Swaps to fields of an ResizeArray
-    let inline private swap x y (data:ResizeArray<'a>) : unit =
-        let tmp = data.[x]
-        data.[x] <- data.[y]
-        data.[y] <- tmp
+    /// returns 'Value for 'Key
+    let get (key:'Key) storage : voption<'Value> =
+        match storage.KeyToIndex.TryGetValue(key) with
+        | true, idx -> ValueSome (storage.Data.[idx])
+        | false, _  -> ValueNone
 
-    /// inserts a key with a given value into the storage. When key
-    /// already exists, then value is overwritten. When key exists
-    /// has O(log n) running time, otherwise O(n).
-    let insert key value storage =
-        match containsKey key storage with
-        | ValueSome idx -> storage.Values.[idx] <- value
+    /// returns internal index for 'Key. Should not be cached as it can become invalid
+    let getIndex (key:'Key) storage : voption<int> =
+        match storage.KeyToIndex.TryGetValue(key) with
+        | true, idx -> ValueSome idx
+        | false, _  -> ValueNone
+
+    /// When passed an index returns the key for it.
+    let getKey (index:int) storage =
+        match storage.IndexToKey.TryGetValue(index) with
+        | true, key -> ValueSome key
+        | false, _  -> ValueNone
+
+    /// Overwrites value at position that was returned by `getIndex`.
+    let saveAt (index:int) (value:'Value) storage : unit =
+        storage.Data.[index] <- value
+
+    /// adds a key,value mapping. Either newly inserting or overwriting existing data
+    let insert (key:'Key) (value:'Value) storage =
+        match getIndex key storage with
+        | ValueSome idx -> storage.Data.[idx] <- value
         | ValueNone     ->
-            let keys = storage.Keys
-            let vals = storage.Values
-            keys.Add key
-            vals.Add value
+            storage.Data.Add(value)
+            let last = storage.Data.Count - 1
+            storage.KeyToIndex.Add(key,last)
+            storage.IndexToKey.Add(last,key)
 
-            let mutable idx     = storage.Keys.Count - 1
-            let mutable running = true
-            while running do
-                if idx > 0 && keys.[idx-1] > keys.[idx] then
-                    swap (idx-1) idx keys
-                    swap (idx-1) idx vals
-                    idx <- idx - 1
-                else
-                    running <- false
-
-    /// Removes a key from Storage. Has O(n) running time. If key does not
-    /// exists then does nothing.
-    let remove key storage : unit =
-        match containsKey key storage with
-        | ValueNone     -> ()
+    let remove (key:'Key) storage : unit =
+        match getIndex key storage with
         | ValueSome idx ->
-            let keys = storage.Keys
-            let vals = storage.Values
-            let last = keys.Count - 1
-            for i=idx to last-1 do
-                swap i (i+1) keys
-                swap i (i+1) vals
-            keys.RemoveAt(last)
-            vals.RemoveAt(last)
+            let lastIdx = storage.Data.Count - 1
+            if idx = lastIdx then
+                storage.Data.RemoveAt(lastIdx)
+                storage.KeyToIndex.Remove(key) |> ignore
+                storage.IndexToKey.Remove(idx) |> ignore
+            else
+                // overwrite key to delete with last element
+                storage.Data.[idx] <- storage.Data.[lastIdx]
+                // remove last element
+                storage.Data.RemoveAt(lastIdx)
+                // delete entries for 'Key in hashes
+                storage.KeyToIndex.Remove(key) |> ignore
+                // update entries for moved element
+                let updatedKey = storage.IndexToKey.[lastIdx]
+                storage.IndexToKey.Remove(lastIdx) |> ignore
+                storage.KeyToIndex.[updatedKey] <- idx
+                storage.IndexToKey.[idx] <- updatedKey
+        | ValueNone ->
+            ()
 
-    /// Iterates through an storage with key and value
-    let inline iter ([<InlineIfLambda>] f) storage : unit =
-        let keys = storage.Keys
-        let vals = storage.Values
-        let last = keys.Count - 1
-        for idx=0 to last do
-            f keys.[idx] vals.[idx]
+    let fetch f key storage =
+        match getIndex key storage with
+        | ValueSome idx -> (f storage.Data.[idx])
+        | ValueNone     -> ()
 
-    /// get a value by a key
-    let get key storage : voption<'Value> =
-        match containsKey key storage with
-        | ValueSome idx -> ValueSome (storage.Values.[idx])
-        | ValueNone     -> ValueNone
+    let inline iter ([<InlineIfLambda>] f) storage =
+        let keys = storage.IndexToKey
+        let mutable idx = 0
+        for value in storage.Data do
+            f (keys.[idx]) value
+            idx <- idx + 1
