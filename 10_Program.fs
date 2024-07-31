@@ -1,6 +1,7 @@
 module MyGame.App
 open Raylib_cs
 open System.Numerics
+open Storage
 open MyGame.DataTypes
 open MyGame.Components
 open MyGame.State
@@ -58,7 +59,7 @@ let boxes () =
                     Comp.createTransformXY (float32 x * 11f) (float32 y * 11f)
                     // this cost a lot of performance because rotation/position/scale of all 3.000 boxes
                     // must be computed with a matrix calculated of the parent.
-                    // |> Comp.addTransformParent boxesOrigin
+                    |> Comp.addTransformParent boxesOrigin
                 )
                 box |> Entity.addView Layer.BG2 (Comp.createViewFromSheets Center assets.Box)
                 box |> Entity.addAnimation (Comp.createAnimationFromSheets assets.Box)
@@ -488,7 +489,7 @@ let drawUI model =
 
     let mutable visibleCount = 0
     for layer in State.View.Data.Keys do
-        visibleCount <- visibleCount + State.View.Data.[layer].Count
+        visibleCount <- visibleCount + Storage.length State.View.Data.[layer]
     Raylib.DrawText(
         text     = String.Format("Visible: {0} {1}", visibleCount, State.drawed),
         posX     = 250,

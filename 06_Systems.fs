@@ -1,8 +1,8 @@
 namespace MyGame.Systems
 open Raylib_cs
 open System.Numerics
-open Dic2
 open Storage
+open Sto2
 open MyGame
 open MyGame.Extensions
 open MyGame.DataTypes
@@ -104,37 +104,37 @@ module View =
         minY <- cam.Y - ((halfY + offset) * (1f / zoom))
         maxY <- cam.Y + ((halfY + offset) * (1f / zoom))
 
-        State.View |> Dic2.iter Layer.BG3 (fun entity v ->
+        State.View |> Sto2.iter Layer.BG3 (fun entity v ->
             match Entity.getTransform entity with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
-        State.View |> Dic2.iter Layer.BG2 (fun entity v ->
+        State.View |> Sto2.iter Layer.BG2 (fun entity v ->
             match Entity.getTransform entity with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
-        State.View |> Dic2.iter Layer.BG1 (fun entity v ->
+        State.View |> Sto2.iter Layer.BG1 (fun entity v ->
             match Entity.getTransform entity with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
-        State.View |> Dic2.iter Layer.FG3 (fun entity v ->
+        State.View |> Sto2.iter Layer.FG3 (fun entity v ->
             match Entity.getTransform entity with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
-        State.View |> Dic2.iter Layer.FG2 (fun entity v ->
+        State.View |> Sto2.iter Layer.FG2 (fun entity v ->
             match Entity.getTransform entity with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
         )
 
-        State.View |> Dic2.iter Layer.FG1 (fun entity v ->
+        State.View |> Sto2.iter Layer.FG1 (fun entity v ->
             match Entity.getTransform entity with
             | ValueSome t -> drawTexture t v
             | ValueNone   -> ()
@@ -187,7 +187,7 @@ module Animations =
             if anim.ElapsedTime > anim.CurrentSheet.FrameDuration then
                 anim.ElapsedTime <- anim.ElapsedTime - anim.CurrentSheet.FrameDuration
                 Comp.setAnimationNextSprite anim
-                match Dic2.get entity State.View with
+                match Sto2.get entity State.View with
                 | ValueSome (_,view) ->
                     match Comp.getCurrentSpriteAnimation anim with
                     | ValueSome sprite -> view.Sprite <- sprite

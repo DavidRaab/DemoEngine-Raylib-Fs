@@ -1,7 +1,7 @@
 namespace MyGame.State
 open Raylib_cs
-open Dic2
 open Storage
+open Sto2
 open MyGame
 open MyGame.DataTypes
 
@@ -26,4 +26,5 @@ module State =
     let TransformParent = Storage.create<Entity,Transform> ()
     let Movement        = Storage.create<Entity,Movement>  ()
     let Animation       = Storage.create<Entity,Animation> ()
-    let View            = Dic2.create<Layer, Entity, View> ()
+    let View            = Sto2.create<Layer, Entity, View> ()
+

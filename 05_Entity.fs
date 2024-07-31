@@ -1,6 +1,6 @@
 namespace MyGame.Entity
-open Dic2
 open Storage
+open Sto2
 open MyGame
 open MyGame.DataTypes
 open MyGame.Components
@@ -51,8 +51,8 @@ module Entity =
     let deleteMovement     entity = Storage.remove entity      State.Movement
     let addAnimation  anim entity = Storage.insert entity anim State.Animation
     let deleteAnimation    entity = Storage.remove entity      State.Animation
-    let addView layer view entity = Dic2.add    layer entity view State.View
-    let deleteView         entity = Dic2.remove       entity      State.View
+    let addView layer view entity = Sto2.add    layer entity view State.View
+    let deleteView         entity = Sto2.remove       entity      State.View
 
     let setAnimation name entity =
         match Storage.get entity State.Animation with
