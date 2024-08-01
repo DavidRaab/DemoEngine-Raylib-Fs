@@ -35,6 +35,11 @@ module Entity =
             Storage.remove entity   State.TransformLocal
             Storage.insert entity t State.TransformParent
 
+    // I don't like it that it needs to try to fetch from one storage and then
+    // from another storage. I could use Sto2, but it shouldn't have any advantage.
+    // Even in Sto2 i need to fetch the mapping and then fetch again. With exactly
+    // asking two Storage this should be fine. But maybe someday i have a better
+    // optimization for it?
     let getTransform entity =
         match Storage.get entity State.TransformLocal with
         | ValueSome t -> ValueSome t

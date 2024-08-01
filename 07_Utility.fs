@@ -213,6 +213,17 @@ module FPS =
         )
 
 module Gui =
+    let mutable mousePos         = Vector2.Zero
+    let mutable mouseLeftPressed = false
+
+    // This avoid repeatitve Raylib function calls during Drawing UI.
+    // Must be called whenever a new frame is rendered to update variables
+    let nextFrame () =
+        mousePos         <- Raylib.GetMousePosition()
+        mouseLeftPressed <-
+            Raylib.IsMouseButtonPressed(Raylib_cs.MouseButton.Left)
+            |> CBool.op_Implicit
+
     type Style = {
         FontSize:             int
         FontColor:            Color
@@ -238,7 +249,7 @@ module Gui =
            && pos.Y <= (rect.Y + rect.Height) then true else false
 
     let mouseInRect (rect:Rectangle) =
-        posInRect (Raylib.GetMousePosition()) rect
+        posInRect mousePos rect
 
     let button (rect:Rectangle) (text:string) : bool =
         let isHover = mouseInRect rect
@@ -253,6 +264,4 @@ module Gui =
         Raylib.DrawText(text, int xText, int yText, style.FontSize, style.FontColor)
         Raylib.DrawRectangleLinesEx(rect, 2f, style.LineColor)
 
-        if CBool.op_Implicit <| (Raylib.IsMouseButtonPressed(Raylib_cs.MouseButton.Left))
-        then isHover
-        else false
+        if mouseLeftPressed then isHover else false

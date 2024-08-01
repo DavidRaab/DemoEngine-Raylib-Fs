@@ -5,9 +5,6 @@ open Sto2
 open MyGame
 open MyGame.DataTypes
 
-type Dictionary<'a,'b> = System.Collections.Generic.Dictionary<'a,'b>
-
-
 module State =
     /// Initialized Random Number Generator to be used
     let rng = System.Random ()
@@ -27,4 +24,3 @@ module State =
     let Movement        = Storage.create<Entity,Movement>  ()
     let Animation       = Storage.create<Entity,Animation> ()
     let View            = Sto2.create<Layer, Entity, View> ()
-

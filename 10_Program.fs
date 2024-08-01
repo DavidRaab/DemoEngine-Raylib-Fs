@@ -481,6 +481,7 @@ let mutable sourceRect = Unchecked.defaultof<Rectangle>
 let mutable destRect   = Unchecked.defaultof<Rectangle>
 
 let drawUI model =
+    Gui.nextFrame ()
     FPS.draw ()
 
     let mousePos = Raylib.GetMousePosition()
