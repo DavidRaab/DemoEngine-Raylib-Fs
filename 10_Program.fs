@@ -619,5 +619,6 @@ let main argv =
 
     // TODO: Proper Unloading of resources
     Raylib.UnloadRenderTexture(target)
+    Raylib.CloseWindow()
 
     1
