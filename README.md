@@ -36,6 +36,8 @@ parent object.
 
 # Benchmarks
 
+I am using a Ryzen 5600 + 16 GiB RAM (3200 Mhz) + GTX 1660 Ti.
+
 |                            | All Visible | Culling (~3000)
 | :------------------------- | --------:   | -------:
 |  3000 boxes without parent | 2050 fps    | 2600 fps
