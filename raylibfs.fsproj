@@ -13,6 +13,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content
+      Include="$(SolutionDir)/Content/**"
+      CopyToOutputDirectory="Always"
+      CopyToPublishDirectory="Always"
+      LinkBase="Content/" />
+  </ItemGroup>
+
+  <ItemGroup>
       <Compile Include="Lib_Storage.fs" />
       <Compile Include="Lib_Sto2.fs" />
       <Compile Include="Lib_Timer.fs" />
