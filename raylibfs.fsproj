@@ -12,6 +12,8 @@
     <PackageReference Include="Raylib-cs" Version="6.1.1" />
   </ItemGroup>
 
+  <!-- Not needed all the time -->
+  <!--
   <ItemGroup>
     <Content
       Include="$(SolutionDir)/Content/**"
@@ -19,6 +21,7 @@
       CopyToPublishDirectory="Always"
       LinkBase="Content/" />
   </ItemGroup>
+  -->
 
   <ItemGroup>
       <Compile Include="Lib_Storage.fs" />
