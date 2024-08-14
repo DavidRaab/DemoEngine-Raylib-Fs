@@ -23,6 +23,14 @@ Only write functions when they add anything useful. This means some kind of
 input type conversation/transformation or providing some defaults.
 *)
 
+[<AutoOpen>]
+module Helper =
+    let private rng = System.Random ()
+    /// random integer between min and max both inclusive
+    let randi min max = min + (rng.Next() % (max-min+1))
+    /// random float between min and max both inclusive
+    let randf min max = min + (rng.NextSingle() * (max-min))
+
 module Rad =
     let inline wrap (x:float32) : float32<rad> =
         LanguagePrimitives.Float32WithMeasure<rad> x
