@@ -40,17 +40,17 @@ let boxes () =
     //
     //                                All     | Culling
     //                               ---------+----------
-    //  3000 boxes without parent -> 2050 fps | 2600 fps (2000 obj)
-    //  6000 boxes without parent -> 1100 fps | 1750 fps
-    // 10000 boxes without parent ->  660 fps | 1550 fps
-    // 40000 boxes without parent ->  150 fps |  750 fps
-    // 90000 boxes without parent ->   50 fps |  320 fps
+    //  3000 boxes without parent -> 2050 fps | 2700 fps (2000 obj)
+    //  6000 boxes without parent -> 1100 fps | 2200 fps
+    // 10000 boxes without parent ->  700 fps | 1700 fps
+    // 40000 boxes without parent ->  180 fps | 1000 fps
+    // 90000 boxes without parent ->   75 fps |  600 fps
     //                                        |
-    //  3000 boxes with parent    -> 1950 fps | 2600 fps (2000 obj)
-    //  6000 boxes with parent    -> 1050 fps | 2300 fps
-    // 10000 boxes with parent    ->  645 fps | 2000 fps
-    // 40000 boxes with parent    ->  140 fps |  600 fps
-    // 90000 boxes with parent    ->   50 fps |  250 fps
+    //  3000 boxes with parent    -> 1950 fps | 2500 fps (2000 obj)
+    //  6000 boxes with parent    -> 1050 fps | 2000 fps
+    // 10000 boxes with parent    ->  660 fps | 1800 fps
+    // 40000 boxes with parent    ->  160 fps |  800 fps
+    // 90000 boxes with parent    ->   65 fps |  450 fps
     //
     for x=1 to 300 do
         for y=1 to 300 do
@@ -59,7 +59,7 @@ let boxes () =
                     Comp.createTransformXY (float32 x * 11f) (float32 y * 11f)
                     // this cost a lot of performance because rotation/position/scale of all 3.000 boxes
                     // must be computed with a matrix calculated of the parent.
-                    |> Comp.addTransformParent boxesOrigin
+                    // |> Comp.addTransformParent boxesOrigin
                 )
                 box |> Entity.addView Layer.BG2 (Comp.createViewFromSheets Center assets.Box)
                 box |> Entity.addAnimation (Comp.createAnimationFromSheets assets.Box)
