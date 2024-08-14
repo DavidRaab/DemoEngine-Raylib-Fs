@@ -52,8 +52,8 @@ let boxes () =
     // 40000 boxes with parent    ->  160 fps |  800 fps
     // 90000 boxes with parent    ->   65 fps |  450 fps
     //
-    for x=1 to 300 do
-        for y=1 to 300 do
+    for x=1 to 100 do
+        for y=1 to 100 do
             boxes.Add (Entity.init (fun box ->
                 box |> Entity.addTransform (
                     Comp.createTransformXY (float32 x * 11f) (float32 y * 11f)
