@@ -6,6 +6,7 @@
     <TieredCompilation>false</TieredCompilation>
     <Configuration>Release</Configuration>
     <Optimize>true</Optimize>
+    <Platform>x64</Platform>
   </PropertyGroup>
 
   <ItemGroup>

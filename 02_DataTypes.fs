@@ -108,7 +108,7 @@ type View = {
 /// A collection of multiple sprites used in an Animation
 type Sheet = {
     Sprites:       Sprite array
-    FrameDuration: TimeSpan
+    FrameDuration: float32
     IsLoop:        bool
 }
 
@@ -120,8 +120,9 @@ type Sheets = {
 type Animation = {
     Sheets:                Sheets
     mutable CurrentSheet:  Sheet
+    mutable ElapsedTime:   float32
     mutable CurrentSprite: int
-    mutable ElapsedTime:   TimeSpan
+    mutable MaxSprites:    int
 }
 
 type Movement = {

@@ -119,12 +119,15 @@ module Comp =
         Scale     = Vector2.One
     }
 
-    let createAnimationFromSheets sheets = createAnimation {
-        Sheets        = sheets
-        CurrentSheet  = sheets.Sheets.[sheets.Default] // can throw exception
-        CurrentSprite = 0
-        ElapsedTime   = TimeSpan.Zero
-    }
+    let createAnimationFromSheets (sheets:Sheets) : Animation =
+        let sheet = sheets.Sheets.[sheets.Default] // can throw exception
+        createAnimation {
+            Sheets        = sheets
+            CurrentSheet  = sheet
+            ElapsedTime   = 0f
+            CurrentSprite = 0
+            MaxSprites    = sheet.Sprites.Length
+        }
 
     /// Adds a Parent to a Transform. Or overwrites Parent when it already has one.
     let addTransformParent parent t =
@@ -196,12 +199,7 @@ module Comp =
         sheet.Sprites.Length
 
     let inline getSheetDuration (sheet:Sheet) =
-        sheet.FrameDuration * (float sheet.Sprites.Length)
-
-    /// Sheet.duration but in float32
-    let inline getSheetDurationF (sheet:Sheet) =
-        let ts = getSheetDuration sheet
-        float32 (ts.TotalSeconds)
+        sheet.FrameDuration * (float32 sheet.Sprites.Length)
 
     let addSheetToSheets name (sheet: Sheet) sheets : Sheets = {
         sheets with
@@ -227,7 +225,7 @@ module Comp =
 
     let resetAnimation (animation:Animation) : unit =
         animation.CurrentSprite <- 0
-        animation.ElapsedTime   <- TimeSpan.Zero
+        animation.ElapsedTime   <- 0f
 
     /// Returns the current Sprite in an animation
     let inline getCurrentSpriteAnimation anim : Sprite voption =
@@ -235,12 +233,10 @@ module Comp =
 
     /// Advance the animation to the next Sprite
     let setAnimationNextSprite (anim:Animation) : unit =
-        let sheet     = anim.CurrentSheet
-        let maxSprite = getSheetLength sheet
-        if sheet.IsLoop then
-            anim.CurrentSprite <- (anim.CurrentSprite + 1) % maxSprite
+        if anim.CurrentSheet.IsLoop then
+            anim.CurrentSprite <- (anim.CurrentSprite + 1) % anim.MaxSprites
         else
-            if anim.CurrentSprite < maxSprite-1 then
+            if anim.CurrentSprite < anim.MaxSprites-1 then
                 anim.CurrentSprite <- anim.CurrentSprite + 1
 
     /// Switch to another sheet animation
@@ -249,7 +245,8 @@ module Comp =
         | Some sheet ->
             anim.CurrentSheet  <- sheet
             anim.CurrentSprite <- 0
-            anim.ElapsedTime   <- TimeSpan.Zero
+            anim.ElapsedTime   <- 0f
+            anim.MaxSprites    <- sheet.Sprites.Length
         | None ->
             let validAnims = System.String.Join(',', Map.keys anim.Sheets.Sheets)
             failwithf "Cannot switch Animation to \"%s\" valid animation are %s" name validAnims

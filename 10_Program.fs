@@ -346,7 +346,7 @@ let update (model:Model) (deltaTime:float32) =
     let nextKnightState previousState =
         // helper-function that describes how an action is mapped to a knightState
         let action2state = function
-            | Attack      -> IsAttack (0f, Comp.getSheetDurationF (Entity.getSheetExn "Attack" model.Knight))
+            | Attack      -> IsAttack (0f, Comp.getSheetDuration (Entity.getSheetExn "Attack" model.Knight))
             | MoveLeft  v -> IsLeft v
             | MoveRight v -> IsRight v
             | Crouch      -> IsCrouch

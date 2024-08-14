@@ -17,8 +17,8 @@ and Sprites = {
 }
 
 module Assets =
-    let inline ms time : TimeSpan =
-        TimeSpan.FromMilliseconds(time)
+    let inline ms time : float32 =
+        time * 0.001f
 
     let load () : Assets =
         let load (str:string) = Raylib.LoadTexture str
@@ -49,19 +49,19 @@ module Assets =
                 Default = "Idle"
                 Sheets  = Map [
                     "Idle"   => Comp.createSheet {
-                        FrameDuration = (ms 100); IsLoop =  true;
+                        FrameDuration = (ms 100f); IsLoop =  true;
                         Sprites = (Comp.createSpritesfromColumnsRows 10 1 (load "Content/FreeKnight/Idle.png"))
                     }
                     "Attack" => Comp.createSheet {
-                        FrameDuration =  (ms 50); IsLoop = false;
+                        FrameDuration =  (ms 50f); IsLoop = false;
                         Sprites = (Comp.createSpritesfromColumnsRows  4 1 (load "Content/FreeKnight/Attack.png"))
                     }
                     "Run"    => Comp.createSheet {
-                        FrameDuration = (ms 100); IsLoop =  true;
+                        FrameDuration = (ms 100f); IsLoop =  true;
                         Sprites = (Comp.createSpritesfromColumnsRows 10 1 (load "Content/FreeKnight/Run.png"))
                     }
                     "Crouch" => Comp.createSheet {
-                        FrameDuration =   (ms 0); IsLoop = false;
+                        FrameDuration =   (ms 0f); IsLoop = false;
                         Sprites = [| Comp.createSpriteTexture             (load "Content/FreeKnight/Crouch.png") |]
                     }
                 ]
@@ -70,7 +70,7 @@ module Assets =
                 Default = "Default"
                 Sheets  = Map [
                     "Default" =>
-                        Comp.createSheet { FrameDuration = (ms 250); IsLoop = true; Sprites = enemy_sprites
+                        Comp.createSheet { FrameDuration = (ms 250f); IsLoop = true; Sprites = enemy_sprites
                     }
                 ]
             }

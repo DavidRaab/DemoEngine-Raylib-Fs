@@ -181,7 +181,6 @@ module Timer =
 
 module Animations =
     let update (deltaTime:float32) =
-        let deltaTime = TimeSpan.FromSeconds(float deltaTime)
         State.Animation |> Storage.iter (fun entity anim ->
             anim.ElapsedTime <- anim.ElapsedTime + deltaTime
             if anim.ElapsedTime > anim.CurrentSheet.FrameDuration then
