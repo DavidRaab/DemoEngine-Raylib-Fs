@@ -120,16 +120,6 @@ module Extensions =
             let det = v1.X * v2.Y - v1.Y * v2.X
             System.MathF.Atan2(det, dot) * 1f<rad>
 
-        static member private rng = System.Random()
-        /// creates a random vector where x,y are in range from -1 to 1
-        static member random () =
-            Vector2.create
-                (Vector2.rng.NextSingle() * 2.0f - 1.0f)
-                (Vector2.rng.NextSingle() * 2.0f - 1.0f)
-
-        static member randomDirection (scale:float32) =
-            Vector2.Normalize (Vector2.random ()) * scale
-
         /// returns a normalized vector from an angle (radiant) relative to Vector2.up
         static member fromAngleRad (angle: float32<rad>) =
             Vector2.create (System.MathF.Sin(float32 angle)) (-System.MathF.Cos(float32 angle))

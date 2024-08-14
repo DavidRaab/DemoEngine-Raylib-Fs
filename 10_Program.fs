@@ -52,8 +52,8 @@ let boxes () =
     // 40000 boxes with parent    ->  140 fps |  600 fps
     // 90000 boxes with parent    ->   50 fps |  250 fps
     //
-    for x=1 to 100 do
-        for y=1 to 100 do
+    for x=1 to 300 do
+        for y=1 to 300 do
             boxes.Add (Entity.init (fun box ->
                 box |> Entity.addTransform (
                     Comp.createTransformXY (float32 x * 11f) (float32 y * 11f)
@@ -93,7 +93,7 @@ let boxes () =
                 Direction = ValueSome(
                     if   State.rng.NextSingle() < 0.1f
                     then Absolute (Vector2.Zero,10f)
-                    else Relative (Vector2.randomDirection 25f)
+                    else Relative (Vector2(State.rng.NextSingle(), State.rng.NextSingle()) * 25f)
                 )
                 Rotation = ValueSome(State.rng.NextSingle() * 60f<deg> - 30f<deg>)
             }
