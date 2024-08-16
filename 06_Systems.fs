@@ -16,21 +16,24 @@ type Parallel  = System.Threading.Tasks.Parallel
 // element. This reduces overhead. F# "inline" feature here is important to
 // eleminate function calls. I guess the .Net Parallel.For maybe don't have
 // this feature, or maybe JIT inlining does it. Who knows?
-let inline runThreaded threadAmount (data:ResizeArray<_>) ([<InlineIfLambda>] f) =
-    let workPerThread = data.Count / threadAmount
-    let mutable runningThreads = threadAmount
+let inline runThreaded threadAmount count ([<InlineIfLambda>] f) =
+    let workPerThread          = count / threadAmount
+    let mutable runningThreads = 4
 
     for currentThread=0 to threadAmount-1 do
-        let start,stop =
-            currentThread      * workPerThread,
-            ((currentThread+1) * workPerThread) - 1
+        let start = currentThread * workPerThread
+        let stop  =
+            if currentThread < (threadAmount-1)
+            then ((currentThread+1) * workPerThread) - 1
+            else count - 1
+
         ignore <| System.Threading.ThreadPool.QueueUserWorkItem(fun _ ->
             for i=start to stop do
                 f i
-                System.Threading.Interlocked.Decrement(&runningThreads) |> ignore
+            System.Threading.Interlocked.Decrement(&runningThreads) |> ignore
         )
 
-    while runningThreads >= 0 do
+    while runningThreads > 0 do
         ()
 
 // Transform System updates the Global_ fields when a Parent is set
@@ -74,7 +77,7 @@ module Transform =
 
     /// Updates all Global fields of every Transform with a Parent
     let update () =
-        runThreaded 4 State.Transform.Data (fun idx ->
+        runThreaded 4 State.Transform.Data.Count (fun idx ->
             updateIndex idx
         )
 
@@ -185,7 +188,7 @@ module Movement =
             ()
 
     let update (deltaTime:float32) =
-        runThreaded 4 State.Movement.Data (fun idx ->
+        runThreaded 4 State.Movement.Data.Count (fun idx ->
             updateTransform deltaTime idx
         )
 
@@ -217,7 +220,7 @@ module Animations =
             | ValueNone          -> ()
 
     let update (deltaTime:float32) =
-        runThreaded 4 State.Animation.Data (fun idx ->
+        runThreaded 4 State.Animation.Data.Count (fun idx ->
             updateAnimation deltaTime idx
         )
 
