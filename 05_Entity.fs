@@ -25,31 +25,19 @@ module Entity =
             yield e
     ]
 
-    let addTransform t entity =
-        match t with
-        | Local _ ->
-            Storage.remove entity   State.TransformParent
-            Storage.insert entity t State.TransformLocal
-        | Parent _ ->
-            Storage.remove entity   State.TransformLocal
-            Storage.insert entity t State.TransformParent
+    let inline addTransform t entity =
+        Storage.insert entity t State.Transform
 
     // I don't like it that it needs to try to fetch from one storage and then
     // from another storage. I could use Sto2, but it shouldn't have any advantage.
     // Even in Sto2 i need to fetch the mapping and then fetch again. With exactly
     // asking two Storage this should be fine. But maybe someday i have a better
     // optimization for it?
-    let getTransform entity =
-        match Storage.get entity State.TransformLocal with
-        | ValueSome t -> ValueSome t
-        | ValueNone   ->
-            match Storage.get entity State.TransformParent with
-            | ValueSome t -> ValueSome t
-            | ValueNone   -> ValueNone
+    let inline getTransform entity =
+        Storage.get entity State.Transform
 
     let deleteTransform entity =
-        Storage.remove entity State.TransformLocal
-        Storage.remove entity State.TransformParent
+        Storage.remove entity State.Transform
 
     let addMovement   mov  entity = Storage.insert entity mov  State.Movement
     let deleteMovement     entity = Storage.remove entity      State.Movement

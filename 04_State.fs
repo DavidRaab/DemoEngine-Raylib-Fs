@@ -15,9 +15,7 @@ module State =
     let mutable uiCamera = Unchecked.defaultof<Raylib_cs.Camera2D>
 
     // State variables
-    // let Transform = Dic2.create<TransformState, Entity, Transform> ()
-    let TransformLocal  = Storage.create<Entity,Transform> ()
-    let TransformParent = Storage.create<Entity,Transform> ()
+    let Transform       = Storage.create<Entity,Transform> ()
     let Movement        = Storage.create<Entity,Movement>  ()
     let Animation       = Storage.create<Entity,Animation> ()
     let View            = Sto2.create<Layer, Entity, View> ()

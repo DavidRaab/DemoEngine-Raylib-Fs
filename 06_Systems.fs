@@ -32,7 +32,7 @@ module Transform =
 
     let updateIndex idx =
         // Get a Transform
-        let struct (_,t) = State.TransformParent.Data.[idx]
+        let struct (_,t) = State.Transform.Data.[idx]
         // When it is Local we don't need to calculate anything. But
         // TransformParent should anyway never contain a Local.
         match t with
@@ -47,7 +47,7 @@ module Transform =
 
     /// Updates all Global fields of every Transform with a Parent
     let update () =
-        Parallel.For(0, State.TransformParent.Data.Count, updateIndex)
+        Parallel.For(0, State.Transform.Data.Count, updateIndex)
         |> ignore
 
 

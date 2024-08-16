@@ -24,37 +24,34 @@ let boxes () =
     )
 
     let boxes = ResizeArray<_>()
-    // I implemented some basic object culling, so fps dramatically
-    // changes depending on zoom level. Interestingly when everything is shown
-    // it had no performance penalty at all. It just improves fps when not
-    // everything is shown. The Culling column show how many fps are archived
-    // with default zoom level and when screen is full of boxes.
+    // Changed the test so half ob boxes are local and the other half has
+    // a parent. This is also a good test as updating the transform has to
+    // check if something is local or parent. So more realistic workload for a
+    // later game. Also removed testing just 3000 or 6000 boxes as framerates
+    // are anyway too high for this less boxes.
     //
-    //     0 boxes                -> 8600 fps
+    //                 All     | Culling (boxes visible)
+    //                ---------+----------
+    // 10000 boxes ->  680 fps | 1500 fps (3000+)
+    // 40000 boxes ->  160 fps |  900 fps (4000+)
+    // 90000 boxes ->   75 fps |  600 fps (5000+)
     //
-    //                                All     | Culling
-    //                               ---------+----------
-    //  3000 boxes without parent -> 2050 fps | 2700 fps (2000 obj)
-    //  6000 boxes without parent -> 1100 fps | 2200 fps
-    // 10000 boxes without parent ->  700 fps | 1700 fps
-    // 40000 boxes without parent ->  180 fps | 1000 fps
-    // 90000 boxes without parent ->   75 fps |  600 fps
-    //                                        |
-    //  3000 boxes with parent    -> 1950 fps | 2500 fps (2000 obj)
-    //  6000 boxes with parent    -> 1050 fps | 2000 fps
-    // 10000 boxes with parent    ->  660 fps | 1800 fps
-    // 40000 boxes with parent    ->  160 fps |  800 fps
-    // 90000 boxes with parent    ->   65 fps |  450 fps
-    //
+    let mutable makeParent = true
     for x=1 to 100 do
         for y=1 to 100 do
             boxes.Add (Entity.init (fun box ->
-                box |> Entity.addTransform (
-                    Comp.createTransformXY (float32 x * 11f) (float32 y * 11f)
-                    // this cost a lot of performance because rotation/position/scale of all 3.000 boxes
-                    // must be computed with a matrix calculated of the parent.
-                    |> Comp.addTransformParent boxesOrigin
-                )
+                let t =
+                    if makeParent then
+                        // this cost a lot of performance because rotation/position/scale of all 3.000 boxes
+                        // must be computed with a matrix calculated of the parent.
+                        makeParent <- not makeParent
+                        Comp.createTransformXY (float32 x * 11f) (float32 y * 11f)
+                        |>Comp.addTransformParent boxesOrigin
+                    else
+                        makeParent <- not makeParent
+                        Comp.createTransformXY (float32 x * 11f) (float32 y * 11f)
+
+                box |> Entity.addTransform t
                 box |> Entity.addView Layer.BG2 (Comp.createViewFromSheets Center assets.Box)
                 box |> Entity.addAnimation (Comp.createAnimationFromSheets assets.Box)
                 box |> Entity.addMovement {
