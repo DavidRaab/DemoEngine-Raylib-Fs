@@ -39,8 +39,6 @@ module Entity =
     let deleteTransform entity =
         Storage.remove entity State.Transform
 
-    let addMovement   mov  entity = Storage.insert entity mov  State.Movement
-    let deleteMovement     entity = Storage.remove entity      State.Movement
     let addAnimation  anim entity = Storage.insert entity anim State.Animation
     let deleteAnimation    entity = Storage.remove entity      State.Animation
     let addView layer view entity = Sto2.add    layer entity view State.View
@@ -58,7 +56,9 @@ module Entity =
 
     /// Destroys an entity by removing all Components
     let destroy entity =
-        deleteTransform entity
-        deleteView entity
-        deleteMovement entity
-        deleteAnimation entity
+        Storage.remove entity State.Transform
+        Sto2.remove    entity State.View
+        Storage.remove entity State.Animation
+        Storage.remove entity State.AutoMovement
+        Storage.remove entity State.AutoTargetPosition
+        Storage.remove entity State.AutoRotation

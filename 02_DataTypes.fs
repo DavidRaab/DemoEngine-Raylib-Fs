@@ -122,10 +122,15 @@ type Animation = {
     mutable MaxSprites:    int
 }
 
-type Movement = {
-    Direction : MovementDirection voption
-    Rotation  : float32<deg>      voption
+type AutoMovement = {
+    mutable Direction : Vector2
 }
-and MovementDirection =
-    | Relative of Vector2
-    | Absolute of position:Vector2 * speed:float32
+
+type AutoTargetPosition = {
+    mutable Position : Vector2
+    mutable Speed    : float32
+}
+
+type AutoRotation = {
+    mutable RotateBy : float32<deg>
+}

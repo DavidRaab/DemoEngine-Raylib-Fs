@@ -31,6 +31,7 @@ module Helper =
     let randi min max = min + (rng.Next() % (max-min+1))
     /// random float between min and max both inclusive
     let randf min max = min + (rng.NextSingle() * (max-min))
+    let vec2 x y = Vector2(x,y)
 
 module Rad =
     let inline wrap (x:float32) : float32<rad> =
@@ -92,7 +93,9 @@ module Comp =
             failwithf "Cannot create Sheets. Sheets must have at least one item."
         st
     let createAnimation (st:Animation) : Animation = st
-    let createMovement  (st:Movement)  : Movement  = st
+    let createAutoMovement       (st:AutoMovement)       : AutoMovement       = st
+    let createAutoTargetPosition (st:AutoTargetPosition) : AutoTargetPosition = st
+    let createAutoRotation       (st:AutoRotation)       : AutoRotation       = st
 
     let createTransformXY x y = createTransform {
         Position = Vector2(x,y)
@@ -259,21 +262,6 @@ module Comp =
         | None ->
             let validAnims = System.String.Join(',', Map.keys anim.Sheets.Sheets)
             failwithf "Cannot switch Animation to \"%s\" valid animation are %s" name validAnims
-
-    let createMovementDirection dir = createMovement {
-        Direction = (ValueSome (Relative dir));
-        Rotation  = ValueNone
-    }
-
-    let createMovementRotation rot = createMovement {
-        Direction = ValueNone
-        Rotation  = (ValueSome rot)
-    }
-
-    let createMovementTo (position:Vector2) speed = createMovement {
-        Direction = (ValueSome (Absolute (position,speed)))
-        Rotation  =  ValueNone
-    }
 
     let createSpritesFromWidthHeight width height (texture:Texture2D) : Sprite array =
         let columns = texture.Width  / width

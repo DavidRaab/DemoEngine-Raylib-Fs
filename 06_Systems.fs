@@ -164,32 +164,33 @@ module View =
             | ValueNone   -> ()
         )
 
+module AutoMovement =
+    let update (dt:float32) =
+        runThreaded 4 State.AutoMovement.Data.Count (fun idx ->
+            let struct (entity,mov) = State.AutoMovement.Data.[idx]
+            match Storage.get entity State.Transform with
+            | ValueSome t -> t.Position <- t.Position + mov.Direction * dt
+            | ValueNone   -> ()
+        )
 
-// Moves those who should be moved
-module Movement =
-    let inline updateTransform dt idx =
-        let struct (entity,mov) = State.Movement.Data.[idx]
-        match Storage.get entity State.Transform with
-        | ValueSome t ->
-            match mov.Direction with
-            | ValueNone                        -> ()
-            | ValueSome (Relative dir)         -> t.Position <- t.Position + (dir * dt)
-            | ValueSome (Absolute (pos,speed)) ->
-                let dir = (Vector2.Normalize (pos - t.Position)) * speed
-                t.Position <- t.Position + (dir * dt)
+module AutoTargetPosition =
+    let update (dt:float32) =
+        runThreaded 4 State.AutoTargetPosition.Data.Count (fun idx ->
+            let struct (entity,mov) = State.AutoTargetPosition.Data.[idx]
+            match Storage.get entity State.Transform with
+            | ValueSome t ->
+                let direction = Vector2.Normalize(mov.Position - t.Position)
+                t.Position <- t.Position + direction * mov.Speed * dt
+            | ValueNone -> ()
+        )
 
-            match mov.Rotation with
-            | ValueNone     -> ()
-            | ValueSome rot ->
-                match t with
-                | Local  t -> t.Rotation <- t.Rotation + (rot * dt)
-                | Parent t -> t.Rotation <- t.Rotation + (rot * dt)
-        | ValueNone ->
-            ()
-
-    let update (deltaTime:float32) =
-        runThreaded 4 State.Movement.Data.Count (fun idx ->
-            updateTransform deltaTime idx
+module AutoRotation =
+    let update (dt:float32) =
+        runThreaded 4 State.AutoRotation.Data.Count (fun idx ->
+            let struct (entity,rot) = State.AutoRotation.Data.[idx]
+            match Storage.get entity State.Transform with
+            | ValueSome t -> t.Rotation <- t.Rotation + rot.RotateBy * dt
+            | ValueNone   -> ()
         )
 
 module Timer =

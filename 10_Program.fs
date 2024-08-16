@@ -17,9 +17,8 @@ let boxes () =
             with Tint = Color.Black
         })
         e |> Entity.addTransform (Comp.createTransformXY 0f 0f)
-        e |> Entity.addMovement {
-            Direction = ValueNone // ValueSome (Relative (Vector2.Right * 50f))
-            Rotation  = ValueSome 90f<deg>
+        State.AutoRotation |> Storage.insert e {
+            RotateBy = 90f<deg>
         }
     )
 
@@ -37,8 +36,8 @@ let boxes () =
     // 90000 boxes ->   75 fps |  600 fps (5000+)
     //
     let mutable makeParent = true
-    for x=1 to 100 do
-        for y=1 to 100 do
+    for x=1 to 300 do
+        for y=1 to 300 do
             boxes.Add (Entity.init (fun box ->
                 let t =
                     if makeParent then
@@ -54,9 +53,9 @@ let boxes () =
                 box |> Entity.addTransform t
                 box |> Entity.addView Layer.BG2 (Comp.createViewFromSheets Center assets.Box)
                 box |> Entity.addAnimation (Comp.createAnimationFromSheets assets.Box)
-                box |> Entity.addMovement {
-                    Direction = ValueNone
-                    Rotation  = ValueSome (90f<deg>)
+
+                State.AutoRotation |> Storage.insert box {
+                    RotateBy = 90f<deg>
                 }
             ))
 
@@ -71,23 +70,38 @@ let boxes () =
     // 40,000 objects immediately when it runs. But anyway with changed implementation
     // i couldn't notice any stutter. But also could anyway change it to a mutable
     // structure if needed.
+    let centerPosition = { Position = vec2 0f 0f; Speed = 25f }
     Systems.Timer.addTimer (Timer.every (sec 0.1) 0 (fun idx dt ->
-        // changes direction and rotation of 200 boxes every call to a new random direction/rotation
-        let updatesPerCall = boxes.Count / 10
+        let updatesPerCall = 1000 //boxes.Count / 10
         let last           = (boxes.Count - 1)
         let max            = if idx+updatesPerCall > last then last else idx+updatesPerCall
         for i=idx to max do
-            // 10% of all boxes will move to world position 0,0 with 10px per second
-            // all other boxes move in a random direction at 25px per second
             let box = boxes.[i]
-            box |> Entity.addMovement {
-                Direction = ValueSome(
-                    if   State.rng.NextSingle() < 0.1f
-                    then Absolute (Vector2.Zero, 25f)
-                    else Relative (Vector2(randf -1f 1f, randf -1f 1f) * 25f)
-                )
-                Rotation = ValueSome(randf -30f 30f * 1f<deg>)
-            }
+
+            // 10% of all boxes will move to world position 0,0
+            if State.rng.NextSingle() < 0.1f then
+                match Storage.get box State.AutoTargetPosition with
+                | ValueSome _ -> ()
+                | ValueNone   ->
+                    State.AutoMovement       |> Storage.remove box
+                    State.AutoTargetPosition |> Storage.insert box centerPosition
+            else
+                match Storage.get box State.AutoMovement with
+                | ValueSome dir -> dir.Direction <- vec2 (randf -1f 1f) (randf -1f 1f) * 25f
+                | ValueNone     ->
+                    State.AutoTargetPosition |> Storage.remove box
+                    State.AutoMovement       |> Storage.insert box {
+                        Direction = vec2 (randf -1f 1f) (randf -1f 1f) * 25f
+                    }
+
+            match Storage.get box State.AutoRotation with
+            | ValueNone ->
+                State.AutoRotation |> Storage.insert box {
+                    RotateBy = (randf -30f 30f) * 1f<deg>
+                }
+            | ValueSome rot ->
+                rot.RotateBy <- rot.RotateBy + (randf -30f 30f) * 1f<deg>
+
         if max = last
         then State 0
         else State max
@@ -243,8 +257,16 @@ let mutable knightState = IsIdle
 let fixedUpdateTiming = 1.0f / 60.0f
 let fixedUpdate model (deltaTime:float32) =
     Systems.Timer.update deltaTime
-    Systems.Movement.update deltaTime
-    Systems.Animations.update deltaTime
+    Async.RunSynchronously(async {
+        let! a = Async.StartChild (async{ Systems.AutoMovement.update deltaTime })
+        let! b = Async.StartChild (async{ Systems.AutoTargetPosition.update deltaTime })
+        let! c = Async.StartChild (async{ Systems.AutoRotation.update deltaTime })
+        let! d = Async.StartChild (async{ Systems.Animations.update deltaTime })
+        do! a
+        do! b
+        do! c
+        do! d
+    })
     Systems.Transform.update ()
     model
 
@@ -526,6 +548,7 @@ let main argv =
             w,h
 
     Raylib.InitWindow(screenWidth,screenHeight,"Raylib Demo")
+    Raylib.SetTargetFPS(60)
     Raylib.SetMouseCursor(MouseCursor.Crosshair)
     // We need to set a Mouse Scale so we don't get the screen position, we instead get
     // a position that is conform with our virtual Resolution. When a virtual resolution
