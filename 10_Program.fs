@@ -427,8 +427,8 @@ let drawUI model =
     FPS.draw ()
 
     let mousePos = Raylib.GetMousePosition()
-    Systems.Drawing.mousePosition  (mousePos) 20 (Vector2.create 0f 320f)
-    Systems.Drawing.trackPosition  model.Knight 20 (Vector2.create 0f 340f)
+    Systems.Drawing.mousePosition      mousePos 8 (Vector2.create 0f 320f)
+    Systems.Drawing.trackPosition  model.Knight 8 (Vector2.create 0f 340f)
 
     let mutable visibleCount = 0
     for layer in State.View.Data.Keys do
@@ -437,7 +437,7 @@ let drawUI model =
         text     = String.Format("Visible: {0} {1}", visibleCount, State.drawed),
         posX     = 250,
         posY     = 3,
-        fontSize = 20,
+        fontSize = 8,
         color    = Color.Yellow
     )
 

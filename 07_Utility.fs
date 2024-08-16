@@ -175,9 +175,14 @@ module Input =
         actions
 
 type FPS = {
-    mutable Updates:     int
-    mutable ElapsedTime: float
-    mutable UpdateFPS:   float
+    // Those contains FPS for last second and the highest FrameTime captured during it
+    mutable Updates:      int
+    mutable MaxFrameTime: float
+
+    // Capturing current data on every frame
+    mutable ElapsedTime:        float
+    mutable UpdateFPS:          float
+    mutable UpdateMaxFrameTime: float
 }
 
 module FPS =
@@ -185,28 +190,35 @@ module FPS =
 
     // Global State
     let state = create {
-        Updates     = 0
-        ElapsedTime = 0
-        UpdateFPS   = 0
+        Updates      = 0
+        MaxFrameTime = 0.0
+
+        ElapsedTime        = 0.0
+        UpdateFPS          = 0.0
+        UpdateMaxFrameTime = 0.0
     }
 
     // Called on each update
-    let update (deltaTime:float32) =
-        let deltaTime = float deltaTime
-        state.Updates     <- state.Updates + 1
-        state.ElapsedTime <- state.ElapsedTime + deltaTime
+    let update (dt:float32) =
+        let dt = float dt
+        state.ElapsedTime        <- state.ElapsedTime + dt
+        state.Updates            <- state.Updates + 1
+        state.UpdateMaxFrameTime <- max state.UpdateMaxFrameTime dt
 
         if state.ElapsedTime >= 1.0 then
-            state.UpdateFPS   <- float state.Updates / state.ElapsedTime
-            state.Updates     <- 0
-            state.ElapsedTime <- state.ElapsedTime - 1.0
+            state.UpdateFPS    <- float state.Updates / state.ElapsedTime
+            state.MaxFrameTime <- state.UpdateMaxFrameTime
+
+            state.Updates            <- 0
+            state.UpdateMaxFrameTime <- 0
+            state.ElapsedTime        <- state.ElapsedTime - 1.0
 
     let draw () =
         Raylib.DrawText(
-            text     = String.Format("FPS: {0:0}", state.UpdateFPS),
+            text     = String.Format("FPS: {0:0} Max: {1:00.00} ms", state.UpdateFPS, state.MaxFrameTime * 1000.0),
             posX     = 3,
             posY     = 3,
-            fontSize = 20,
+            fontSize = 8,
             color    = Color.Yellow
         )
 
