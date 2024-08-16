@@ -45,7 +45,9 @@ module Transform =
             match Entity.getTransform parent.Parent with
             | ValueNone        -> ValueNone
             | ValueSome parent ->
-                (calculateTransform parent) |> ValueOption.map (fun (pPos,pRot,pScale) ->
+                match calculateTransform parent with
+                | ValueNone                    -> ValueNone
+                | ValueSome (pPos,pRot,pScale) ->
                     let scale   = Vector2.create (pScale.X * me.Scale.X) (pScale.Y * me.Scale.Y)
                     let pos     = Vector2.Transform(
                         me.Position,
@@ -53,8 +55,7 @@ module Transform =
                         * Matrix.CreateRotationZ(float32 (Rad.fromDeg pRot)) // rotate by parent position
                         * Matrix.CreateTranslation(Vector3(pPos,0f))            // translate by parent position
                     )
-                    pos,pRot+me.Rotation,scale
-                )
+                    ValueSome (pos,pRot+me.Rotation,scale)
 
     let inline updateIndex idx =
         // Get a Transform
@@ -165,7 +166,7 @@ module View =
 module Movement =
     let inline updateTransform dt idx =
         let struct (entity,mov) = State.Movement.Data.[idx]
-        match Entity.getTransform entity with
+        match Storage.get entity State.Transform with
         | ValueSome t ->
             match mov.Direction with
             | ValueNone                        -> ()

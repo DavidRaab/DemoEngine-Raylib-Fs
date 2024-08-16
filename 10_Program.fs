@@ -33,7 +33,7 @@ let boxes () =
     //                 All     | Culling (boxes visible)
     //                ---------+----------
     // 10000 boxes ->  680 fps | 1500 fps (3000+)
-    // 40000 boxes ->  160 fps |  900 fps (4000+)
+    // 40000 boxes ->  180 fps |  800 fps (5000+)
     // 90000 boxes ->   75 fps |  600 fps (5000+)
     //
     let mutable makeParent = true
@@ -55,7 +55,7 @@ let boxes () =
                 box |> Entity.addView Layer.BG2 (Comp.createViewFromSheets Center assets.Box)
                 box |> Entity.addAnimation (Comp.createAnimationFromSheets assets.Box)
                 box |> Entity.addMovement {
-                    Direction = ValueNone //ValueSome (Relative (Vector2.Right * 25f))
+                    Direction = ValueNone
                     Rotation  = ValueSome (90f<deg>)
                 }
             ))
@@ -74,8 +74,8 @@ let boxes () =
     Systems.Timer.addTimer (Timer.every (sec 0.1) 0 (fun idx dt ->
         // changes direction and rotation of 200 boxes every call to a new random direction/rotation
         let updatesPerCall = boxes.Count / 10
-        let last = (boxes.Count - 1)
-        let max = if idx+updatesPerCall > last then last else idx+updatesPerCall
+        let last           = (boxes.Count - 1)
+        let max            = if idx+updatesPerCall > last then last else idx+updatesPerCall
         for i=idx to max do
             // 10% of all boxes will move to world position 0,0 with 10px per second
             // all other boxes move in a random direction at 25px per second
@@ -83,10 +83,10 @@ let boxes () =
             box |> Entity.addMovement {
                 Direction = ValueSome(
                     if   State.rng.NextSingle() < 0.1f
-                    then Absolute (Vector2.Zero,10f)
-                    else Relative (Vector2(State.rng.NextSingle(), State.rng.NextSingle()) * 25f)
+                    then Absolute (Vector2.Zero, 25f)
+                    else Relative (Vector2(randf -1f 1f, randf -1f 1f) * 25f)
                 )
-                Rotation = ValueSome(State.rng.NextSingle() * 60f<deg> - 30f<deg>)
+                Rotation = ValueSome(randf -30f 30f * 1f<deg>)
             }
         if max = last
         then State 0
