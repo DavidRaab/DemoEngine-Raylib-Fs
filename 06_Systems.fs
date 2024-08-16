@@ -7,6 +7,32 @@ open Sto2
 type Transform = MyGame.Transform
 type Parallel  = System.Threading.Tasks.Parallel
 
+// Similar to Parrallel.For that I used before. But profiling showed a lot of
+// garbage and thread waiting. Don't know how it exactly works, so just rewritten
+// it myself. It splits the work across a fixed amount of threads, what usually
+// is anyway better in a game to have a fixed amount of workers. Than the main
+// thread basically spinlocks until all threads finish. This way i still can use
+// a loop to process multiple items instead of calling a function for every
+// element. This reduces overhead. F# "inline" feature here is important to
+// eleminate function calls. I guess the .Net Parallel.For maybe don't have
+// this feature, or maybe JIT inlining does it. Who knows?
+let inline runThreaded threadAmount (data:ResizeArray<_>) ([<InlineIfLambda>] f) =
+    let workPerThread = data.Count / threadAmount
+    let mutable runningThreads = threadAmount
+
+    for currentThread=0 to threadAmount-1 do
+        let start,stop =
+            currentThread      * workPerThread,
+            ((currentThread+1) * workPerThread) - 1
+        ignore <| System.Threading.ThreadPool.QueueUserWorkItem(fun _ ->
+            for i=start to stop do
+                f i
+                System.Threading.Interlocked.Decrement(&runningThreads) |> ignore
+        )
+
+    while runningThreads >= 0 do
+        ()
+
 // Transform System updates the Global_ fields when a Parent is set
 module Transform =
     // Calculates position, rotation and scale relative to parent
@@ -30,7 +56,7 @@ module Transform =
                     pos,pRot+me.Rotation,scale
                 )
 
-    let updateIndex idx =
+    let inline updateIndex idx =
         // Get a Transform
         let struct (_,t) = State.Transform.Data.[idx]
         // When it is Local we don't need to calculate anything. But
@@ -47,9 +73,9 @@ module Transform =
 
     /// Updates all Global fields of every Transform with a Parent
     let update () =
-        Parallel.For(0, State.Transform.Data.Count, updateIndex)
-        |> ignore
-
+        runThreaded 4 State.Transform.Data (fun idx ->
+            updateIndex idx
+        )
 
 // View System draws entity
 module View =
@@ -137,28 +163,30 @@ module View =
 
 // Moves those who should be moved
 module Movement =
-    let update (deltaTime:float32) =
-        Parallel.For(0, State.Movement.Data.Count, (fun idx ->
-            let struct (entity,mov) = State.Movement.Data.[idx]
-            match Entity.getTransform entity with
-            | ValueSome t ->
-                match mov.Direction with
-                | ValueNone                        -> ()
-                | ValueSome (Relative dir)         -> t.Position <- t.Position + (dir * deltaTime)
-                | ValueSome (Absolute (pos,speed)) ->
-                    let dir = (Vector2.Normalize (pos - t.Position)) * speed
-                    t.Position <- t.Position + (dir * deltaTime)
+    let inline updateTransform dt idx =
+        let struct (entity,mov) = State.Movement.Data.[idx]
+        match Entity.getTransform entity with
+        | ValueSome t ->
+            match mov.Direction with
+            | ValueNone                        -> ()
+            | ValueSome (Relative dir)         -> t.Position <- t.Position + (dir * dt)
+            | ValueSome (Absolute (pos,speed)) ->
+                let dir = (Vector2.Normalize (pos - t.Position)) * speed
+                t.Position <- t.Position + (dir * dt)
 
-                match mov.Rotation with
-                | ValueNone     -> ()
-                | ValueSome rot ->
-                    match t with
-                    | Local  t -> t.Rotation <- t.Rotation + (rot * deltaTime)
-                    | Parent t -> t.Rotation <- t.Rotation + (rot * deltaTime)
-            | ValueNone ->
-                ()
-        ))
-        |> ignore
+            match mov.Rotation with
+            | ValueNone     -> ()
+            | ValueSome rot ->
+                match t with
+                | Local  t -> t.Rotation <- t.Rotation + (rot * dt)
+                | Parent t -> t.Rotation <- t.Rotation + (rot * dt)
+        | ValueNone ->
+            ()
+
+    let update (deltaTime:float32) =
+        runThreaded 4 State.Movement.Data (fun idx ->
+            updateTransform deltaTime idx
+        )
 
 module Timer =
     let mutable state = ResizeArray<Timed<unit>>()
@@ -174,18 +202,22 @@ module Timer =
             | Finished _ -> state.RemoveAt(idx)
 
 module Animations =
+    let inline updateAnimation dt idx =
+        let struct (entity, anim) = State.Animation.Data.[idx]
+        anim.ElapsedTime <- anim.ElapsedTime + dt
+        if anim.ElapsedTime > anim.CurrentSheet.FrameDuration then
+            anim.ElapsedTime <- anim.ElapsedTime - anim.CurrentSheet.FrameDuration
+            Comp.setAnimationNextSprite anim
+            match Sto2.get entity State.View with
+            | ValueSome (_,view) ->
+                match Comp.getCurrentSpriteAnimation anim with
+                | ValueSome sprite -> view.Sprite <- sprite
+                | ValueNone        -> ()
+            | ValueNone          -> ()
+
     let update (deltaTime:float32) =
-        State.Animation |> Storage.iter (fun entity anim ->
-            anim.ElapsedTime <- anim.ElapsedTime + deltaTime
-            if anim.ElapsedTime > anim.CurrentSheet.FrameDuration then
-                anim.ElapsedTime <- anim.ElapsedTime - anim.CurrentSheet.FrameDuration
-                Comp.setAnimationNextSprite anim
-                match Sto2.get entity State.View with
-                | ValueSome (_,view) ->
-                    match Comp.getCurrentSpriteAnimation anim with
-                    | ValueSome sprite -> view.Sprite <- sprite
-                    | ValueNone        -> ()
-                | ValueNone          -> ()
+        runThreaded 4 State.Animation.Data (fun idx ->
+            updateAnimation deltaTime idx
         )
 
 module Drawing =
