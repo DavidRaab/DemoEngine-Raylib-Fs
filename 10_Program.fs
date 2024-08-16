@@ -53,7 +53,7 @@ let boxes () =
                     Comp.createTransformXY (float32 x * 11f) (float32 y * 11f)
                     // this cost a lot of performance because rotation/position/scale of all 3.000 boxes
                     // must be computed with a matrix calculated of the parent.
-                    // |> Comp.addTransformParent boxesOrigin
+                    |> Comp.addTransformParent boxesOrigin
                 )
                 box |> Entity.addView Layer.BG2 (Comp.createViewFromSheets Center assets.Box)
                 box |> Entity.addAnimation (Comp.createAnimationFromSheets assets.Box)

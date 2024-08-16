@@ -3,7 +3,6 @@ open Raylib_cs
 open System.Numerics
 open Storage
 open Sto2
-open Timer
 
 type Transform = MyGame.Transform
 type Parallel  = System.Threading.Tasks.Parallel
@@ -31,23 +30,24 @@ module Transform =
                     pos,pRot+me.Rotation,scale
                 )
 
+    let updateIndex idx =
+        // Get a Transform
+        let struct (_,t) = State.TransformParent.Data.[idx]
+        // When it is Local we don't need to calculate anything. But
+        // TransformParent should anyway never contain a Local.
+        match t with
+        | Parent p ->
+            match calculateTransform t with
+            | ValueNone -> ()
+            | ValueSome (pos,rot,scale) ->
+                p.GlobalPosition <- pos
+                p.GlobalRotation <- rot
+                p.GlobalScale    <- scale
+        | Local  _ -> ()
+
     /// Updates all Global fields of every Transform with a Parent
     let update () =
-        Parallel.For(0, (State.TransformParent.Data.Count), (fun idx ->
-            // Get a Transform
-            let struct (_,t) = State.TransformParent.Data.[idx]
-            // When it is Local we don't need to calculate anything. But
-            // TransformParent should anyway never contain a Local.
-            match t with
-            | Parent p ->
-                match calculateTransform t with
-                | ValueNone -> ()
-                | ValueSome (pos,rot,scale) ->
-                    p.GlobalPosition <- pos
-                    p.GlobalRotation <- rot
-                    p.GlobalScale    <- scale
-            | Local  _ -> ()
-        ))
+        Parallel.For(0, State.TransformParent.Data.Count, updateIndex)
         |> ignore
 
 
