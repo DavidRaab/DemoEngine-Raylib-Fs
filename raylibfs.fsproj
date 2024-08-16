@@ -4,6 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <PublishReadyToRun>false</PublishReadyToRun>
     <TieredCompilation>false</TieredCompilation>
+    <TieredCompilationQuickJit>false</TieredCompilationQuickJit>
+    <TieredCompilationQuickJitForLoops>false</TieredCompilationQuickJitForLoops>
     <Configuration>Release</Configuration>
     <Optimize>true</Optimize>
     <Platform>x64</Platform>
