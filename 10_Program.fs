@@ -225,8 +225,8 @@ let initModel () =
     ))
 
     // Periodically run Garbage Collector
-    Systems.Timer.addTimer (Timer.every (sec 10.0) () (fun _ _ ->
-        System.GC.Collect ()
+    Systems.Timer.addTimer (Timer.every (sec 1.0) () (fun _ _ ->
+        System.GC.Collect(2)
         State ()
     ))
 
@@ -500,6 +500,7 @@ let draw (model:Model) (deltaTime:float32) =
 
 [<EntryPoint;System.STAThread>]
 let main argv =
+    System.Runtime.GCSettings.LatencyMode <- System.Runtime.GCLatencyMode.SustainedLowLatency
     // The Game uses a virtual Render solution. It renders everything to a
     // RenderTexture with that Resolution. Then this RenderTexture is scaled to
     // the window screen. Scaling tries to fit as much of the windows as it is
