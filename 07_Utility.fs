@@ -1,10 +1,8 @@
-namespace MyGame.Utility
+namespace MyGame
 open Raylib_cs
 open System.Numerics
-open MyGame.State
 
-type String   = System.String
-type TimeSpan = System.TimeSpan
+type String = System.String
 
 type Key     = KeyboardKey
 type GamePad =

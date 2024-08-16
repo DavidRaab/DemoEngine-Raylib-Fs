@@ -1,11 +1,10 @@
-namespace MyGame.Entity
+namespace MyGame
 open Storage
 open Sto2
-open MyGame
-open MyGame.DataTypes
-open MyGame.Components
-open MyGame.State
 
+// I thought that was not needed anymore, but it seems because Entity is
+// a struct this must be added.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Entity =
     let mutable private counter = 0
 

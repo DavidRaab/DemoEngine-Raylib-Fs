@@ -1,12 +1,10 @@
-namespace MyGame.Timer
-
-type TimeSpan = System.TimeSpan
+namespace MyGame
 
 // Data-Types
 [<Struct>]
 type TimerResult<'a> =
     | Pending
-    | Finished of 'a * TimeSpan
+    | Finished of 'a * System.TimeSpan
 
 module TimerResult =
     let isFinished tr =
@@ -24,7 +22,7 @@ type EveryState<'State,'a> =
     | State  of state: 'State
     | Finish of finish:'a
 
-type Timed<'a> = Timed of (TimeSpan -> TimerResult<'a>)
+type Timed<'a> = Timed of (System.TimeSpan -> TimerResult<'a>)
 type Timer<'a> = Timer of (unit -> Timed<'a>)
 
 
@@ -54,7 +52,7 @@ module Timer =
     /// Turns a function into a timer that is delayed for the given TimeSpan
     let create delay f =
         Timer(fun () ->
-            let mutable elapsedTime = TimeSpan.Zero
+            let mutable elapsedTime = System.TimeSpan.Zero
             Timed.create (fun deltaTime ->
                 elapsedTime <- elapsedTime + deltaTime
                 if elapsedTime >= delay then
@@ -65,14 +63,14 @@ module Timer =
 
     /// The same as `create` but expects seconds instead of a `TimeSpan`
     let seconds seconds f =
-        create (TimeSpan.FromSeconds seconds) f
+        create (System.TimeSpan.FromSeconds seconds) f
 
     /// A function is executed for the given duration. A state is passed
     /// through every invocation the function is runned. When finished, returns
     /// the final state.
     let duration duration (state:'State) f =
         Timer(fun () ->
-            let mutable elapsedTime = TimeSpan.Zero
+            let mutable elapsedTime = System.TimeSpan.Zero
             let mutable state       = state
             Timed.create (fun deltaTime ->
                 elapsedTime <- elapsedTime + deltaTime
@@ -88,14 +86,14 @@ module Timer =
     /// on every `Timed.run` call and gets passed the real deltaTime between two calls.
     let every timeSpan (state:'State) f =
         Timer(fun () ->
-            let mutable elapsedTime = TimeSpan.Zero
+            let mutable elapsedTime = System.TimeSpan.Zero
             let mutable state       = state
 
-            if timeSpan = TimeSpan.Zero then
+            if timeSpan = System.TimeSpan.Zero then
                 Timed.create (fun dt ->
                     match f state dt with
                     | State s  -> state <- s; Pending
-                    | Finish x -> Finished (x, TimeSpan.Zero)
+                    | Finish x -> Finished (x, System.TimeSpan.Zero)
                 )
             else
                 Timed.create (fun dt ->
@@ -107,7 +105,7 @@ module Timer =
                             | State s ->
                                 state <- s;
                                 if elapsedTime >= timeSpan
-                                then loop TimeSpan.Zero
+                                then loop System.TimeSpan.Zero
                                 else Pending
                             | Finish x ->
                                 Finished (x, elapsedTime)
@@ -252,7 +250,7 @@ module Timer =
     /// the result of every timer as an array. Additionally maps the result.
     let sequentialMap f timers = Timer(fun () ->
         let results           = ResizeArray<_>()
-        let mutable restTimer = TimeSpan.Zero
+        let mutable restTimer = System.TimeSpan.Zero
         let mutable timers    = List.ofSeq (Seq.map Timed.get timers)
         Timed.create(fun dt ->
             let rec loop dt =
@@ -261,7 +259,7 @@ module Timer =
                 | timer::rest ->
                     let dt =
                         let newDt = dt + restTimer
-                        restTimer <- TimeSpan.Zero
+                        restTimer <- System.TimeSpan.Zero
                         newDt
                     match Timed.run dt timer with
                     | Pending        -> Pending
@@ -269,7 +267,7 @@ module Timer =
                         results.Add (f x)
                         restTimer <- t
                         timers    <- rest
-                        loop TimeSpan.Zero
+                        loop System.TimeSpan.Zero
             loop dt
         )
     )

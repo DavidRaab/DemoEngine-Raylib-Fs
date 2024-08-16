@@ -1,15 +1,9 @@
 module MyGame.App
 open Raylib_cs
 open System.Numerics
+open MyGame
 open Storage
-open MyGame.DataTypes
-open MyGame.Components
-open MyGame.State
-open MyGame.Entity
-open MyGame.Utility
-open MyGame.Timer
-open MyGame.Assets
-open MyGame.GameStructs
+open Model
 
 // Some global variables
 let mutable assets : Assets = Unchecked.defaultof<_>

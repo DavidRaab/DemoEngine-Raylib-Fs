@@ -1,9 +1,6 @@
-namespace MyGame.DataTypes
+namespace MyGame
 open Raylib_cs
 open System.Numerics
-open MyGame.Extensions
-
-type TimeSpan = System.TimeSpan
 
 [<Struct>]
 type Entity =

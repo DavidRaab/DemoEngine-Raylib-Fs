@@ -1,9 +1,6 @@
-namespace MyGame.State
-open Raylib_cs
+namespace MyGame
 open Storage
 open Sto2
-open MyGame
-open MyGame.DataTypes
 
 module State =
     /// Initialized Random Number Generator to be used
@@ -14,8 +11,8 @@ module State =
     let mutable drawed   = 0
 
     // Camera objects, initialized on game startup
-    let mutable camera   = Unchecked.defaultof<Camera2D>
-    let mutable uiCamera = Unchecked.defaultof<Camera2D>
+    let mutable camera   = Unchecked.defaultof<Raylib_cs.Camera2D>
+    let mutable uiCamera = Unchecked.defaultof<Raylib_cs.Camera2D>
 
     // State variables
     // let Transform = Dic2.create<TransformState, Entity, Transform> ()

@@ -1,18 +1,12 @@
-namespace MyGame.Systems
+module MyGame.Systems
 open Raylib_cs
 open System.Numerics
 open Storage
 open Sto2
-open MyGame
-open MyGame.Extensions
-open MyGame.DataTypes
-open MyGame.Components
-open MyGame.State
-open MyGame.Entity
-open MyGame.Timer
+open Timer
 
-type TimeSpan = System.TimeSpan
-type Parallel = System.Threading.Tasks.Parallel
+type Transform = MyGame.Transform
+type Parallel  = System.Threading.Tasks.Parallel
 
 // Transform System updates the Global_ fields when a Parent is set
 module Transform =

@@ -1,8 +1,5 @@
-namespace MyGame.Assets
+namespace MyGame
 open Raylib_cs
-open MyGame.Extensions
-open MyGame.DataTypes
-open MyGame.Components
 
 type Assets = {
     Sprites: Sprites

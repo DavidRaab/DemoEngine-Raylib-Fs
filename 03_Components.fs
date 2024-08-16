@@ -1,8 +1,5 @@
-namespace MyGame.Components
-open Raylib_cs
+namespace MyGame
 open System.Numerics
-open MyGame
-open MyGame.DataTypes
 
 (* Design Philosophy
 
@@ -22,6 +19,10 @@ does this.
 Only write functions when they add anything useful. This means some kind of
 input type conversation/transformation or providing some defaults.
 *)
+
+type Texture2D = Raylib_cs.Texture2D
+type Rectangle = Raylib_cs.Rectangle
+type Color     = Raylib_cs.Color
 
 [<AutoOpen>]
 module Helper =

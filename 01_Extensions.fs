@@ -7,14 +7,13 @@ type Dictionary<'a,'b> = System.Collections.Generic.Dictionary<'a,'b>
 type TimeSpan          = System.TimeSpan
 type Matrix            = Matrix4x4
 
+[<Measure>] type ms
+// Radiant and Degree types
+[<Measure>] type rad
+[<Measure>] type deg
+
 [<AutoOpen>]
 module Extensions =
-    // Milliseconds
-    [<Measure>] type ms
-    // Radiant and Degree types
-    [<Measure>] type rad
-    [<Measure>] type deg
-
     // Perl like op used in defining hashes/Map
     let (=>) x y = x,y
 

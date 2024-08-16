@@ -1,8 +1,6 @@
-module MyGame.GameStructs
-open Raylib_cs
+module Model
+open MyGame
 open System.Numerics
-open MyGame.DataTypes
-open MyGame.Utility
 
 // Shorter Alias for KeyboardKey
 type Key = Raylib_cs.KeyboardKey
