@@ -240,7 +240,6 @@ let initModel () =
 let mutable knightState = IsIdle
 
 // A Fixed Update implementation that tuns at the specified fixedUpdateTiming
-let mutable resetInput = false
 let fixedUpdateTiming = 1.0f / 60.0f
 let fixedUpdate model (deltaTime:float32) =
     Systems.Timer.update deltaTime
@@ -249,6 +248,7 @@ let fixedUpdate model (deltaTime:float32) =
     Systems.Transform.update ()
     model
 
+let useFixedUpdate = true
 let mutable fixedUpdateElapsedTime = 0f
 let update (model:Model) (deltaTime:float32) =
     FPS.update deltaTime
@@ -371,14 +371,18 @@ let update (model:Model) (deltaTime:float32) =
             State.camera.Target <- newPos
         | _                           -> ()
 
+
     // FixedUpdate Handling
-    fixedUpdateElapsedTime <- fixedUpdateElapsedTime + deltaTime
     let model =
-        if fixedUpdateElapsedTime >= fixedUpdateTiming then
-            fixedUpdateElapsedTime <- fixedUpdateElapsedTime - fixedUpdateTiming
-            fixedUpdate model fixedUpdateTiming
+        if useFixedUpdate then
+            fixedUpdateElapsedTime <- fixedUpdateElapsedTime + deltaTime
+            if fixedUpdateElapsedTime >= fixedUpdateTiming then
+                fixedUpdateElapsedTime <- fixedUpdateElapsedTime - fixedUpdateTiming
+                fixedUpdate model fixedUpdateTiming
+            else
+                model
         else
-            model
+            fixedUpdate model deltaTime
 
     (*
     // Vibration through Triggers
