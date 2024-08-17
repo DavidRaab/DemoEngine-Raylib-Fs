@@ -524,6 +524,35 @@ let draw (model:Model) (deltaTime:float32) =
         )
     )
 
+// or use: dotnet-counters monitor --process-id xxxx
+// to print GC information on running process
+let mutable gen0 = 0
+let mutable gen1 = 0
+let mutable gen2 = 0
+let showGCInfo () =
+    let printPause () =
+        let mem  = float(System.GC.GetTotalMemory(false))         / 1024.0 / 1024.0
+        let tacc = float(System.GC.GetTotalAllocatedBytes(false)) / 1024.0 / 1024.0
+        let info = System.GC.GetGCMemoryInfo(System.GCKind.Any)
+        let str  = System.String.Format("{0} {1} {2} Pause {3:0.00}% Mem {4:0.00} MiB Allocated {5:0.00} MiB",
+            gen0, gen1, gen2,
+            info.PauseTimePercentage,
+            mem, tacc
+        )
+        System.Console.WriteLine(str)
+    let g0 = System.GC.CollectionCount(0)
+    let g1 = System.GC.CollectionCount(1)
+    let g2 = System.GC.CollectionCount(2)
+    if g0 <> gen0 then
+        gen0 <- g0
+        printPause ()
+    if g1 <> gen1 then
+        gen1 <- g1
+        printPause ()
+    if g2 <> gen2 then
+        gen2 <- g2
+        printPause ()
+
 [<EntryPoint;System.STAThread>]
 let main argv =
     printfn "Is GC ServerMode %b" System.Runtime.GCSettings.IsServerGC
@@ -549,7 +578,7 @@ let main argv =
             w,h
 
     // Raylib.SetConfigFlags(ConfigFlags.VSyncHint ||| ConfigFlags.FullscreenMode )
-    Raylib.InitWindow(screenWidth,screenHeight,"Raylib Demo")
+    Raylib.InitWindow(screenWidth,screenHeight, "Raylib Demo")
     // Raylib.SetTargetFPS(75)
     Raylib.SetMouseCursor(MouseCursor.Crosshair)
     // We need to set a Mouse Scale so we don't get the screen position, we instead get
@@ -585,6 +614,7 @@ let main argv =
 
     // Game Loop
     while not (CBool.op_Implicit (Raylib.WindowShouldClose())) do
+        // showGCInfo ()
         let deltaTime = Raylib.GetFrameTime ()
         model <- update model deltaTime
         draw model deltaTime
