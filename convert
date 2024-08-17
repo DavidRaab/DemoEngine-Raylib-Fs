@@ -1,0 +1,44 @@
+#!/usr/bin/env perl
+use v5.36;
+use open ':std', ':encoding(UTF-8)';
+use Data::Printer;
+use Path::Tiny;
+
+# Convert last .nettrace file to speedscope and opens Speedscope App in Browser
+
+my $file_format = qr/\A raylibfs_(\d+)_(\d+) [.] nettrace \z/xms;
+
+my $youngest = undef;
+for my $file ( path('.')->children ) {
+    if ( $file =~ $file_format ) {
+        my $date = $1;
+        my $time = $2;
+        my $new = { file => $file, date => $date, time => $time };
+        if ( !defined $youngest ) {
+            $youngest = {
+                file => $file,
+                date => $date,
+                time => $time,
+            };
+        }
+        else {
+            if ( $date >= $youngest->{date} ) {
+                $youngest = $new;
+            }
+            elsif ( $date == $youngest->{date} && $time > $youngest->{time} ) {
+                $youngest = $new;
+            }
+            else {
+                # skip
+            }
+        }
+    }
+}
+
+if ( defined $youngest ) {
+    system(qw{dotnet-trace convert}, $youngest->{file}, qw{--format speedscope -o profile});
+    exec(qw{firefox --new-tab https://www.speedscope.app/ })
+}
+else {
+    warn "Aborting. Could not find any nettrace file. Run profile first.\n";
+}

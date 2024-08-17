@@ -1,0 +1,36 @@
+#!/usr/bin/env perl
+use v5.36;
+use open ':std', ':encoding(UTF-8)';
+
+# Finds current running program and shows Gargabe Collector statistics
+
+my $pid = 0;
+for my $process ( processes() ) {
+    if ( $process->{command} =~ m/raylibfs\z/ ) {
+        $pid = $process->{pid};
+    }
+}
+
+if ( $pid ) {
+    exec('dotnet-counters', 'monitor', '--process-id', $pid);
+}
+else {
+    warn "Error: Could not find raylibfs process!\n";
+}
+
+sub processes() {
+    my @ps = split /\n/, `ps a`;
+    shift @ps;
+    my @out;
+    for my $line ( @ps ) {
+        my @cols = $line =~ m/\A\s* (\S+) \s+ (\S+) \s+ (\S+) \s+ (\S+) \s+ (.*) \z/xms;
+        push @out, {
+            pid     => $cols[0],
+            tty     => $cols[1],
+            stat    => $cols[2],
+            time    => $cols[3],
+            command => $cols[4],
+        };
+    }
+    return wantarray ? @out : \@out;
+}

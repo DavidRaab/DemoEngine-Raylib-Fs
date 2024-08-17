@@ -1,0 +1,15 @@
+#!/usr/bin/env perl
+use v5.36;
+use open ':std', ':encoding(UTF-8)';
+use Path::Tiny;
+
+# Deletes profiling files
+
+for my $file ( path('.')->children ) {
+    if ( $file =~ m/ \.nettrace \z /xms ) {
+        unlink $file;
+    }
+    if ( $file =~ m/ speedscope\.json \z /xms ) {
+        unlink $file;
+    }
+}
