@@ -239,10 +239,10 @@ let initModel () =
     ))
 
     // Periodically run Garbage Collector
-    Systems.Timer.addTimer (Timer.every (sec 1.0) () (fun _ _ ->
-        System.GC.Collect(2)
-        State ()
-    ))
+    // Systems.Timer.addTimer (Timer.every (sec 3.0) () (fun _ _ ->
+    //     System.GC.Collect(0, System.GCCollectionMode.Optimized, false)
+    //     State ()
+    // ))
 
     let gameState = {
         Knight         = knight
