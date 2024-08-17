@@ -77,9 +77,11 @@ module Transform =
 
     /// Updates all Global fields of every Transform with a Parent
     let update () =
-        runThreaded 4 State.Transform.Data.Count (fun idx ->
+        // runThreaded 4 State.Transform.Data.Count (fun idx ->
+        Parallel.For(0, State.Transform.Data.Count, (fun idx ->
             updateIndex idx
-        )
+        ))
+        |> ignore
 
 // View System draws entity
 module View =
@@ -166,32 +168,30 @@ module View =
 
 module AutoMovement =
     let update (dt:float32) =
-        runThreaded 4 State.AutoMovement.Data.Count (fun idx ->
+        for idx=0 to State.AutoMovement.Data.Count-1 do
             let struct (entity,mov) = State.AutoMovement.Data.[idx]
             match Storage.get entity State.Transform with
             | ValueSome t -> t.Position <- t.Position + mov.Direction * dt
             | ValueNone   -> ()
-        )
+
 
 module AutoTargetPosition =
     let update (dt:float32) =
-        runThreaded 4 State.AutoTargetPosition.Data.Count (fun idx ->
+        for idx=0 to State.AutoTargetPosition.Data.Count-1 do
             let struct (entity,mov) = State.AutoTargetPosition.Data.[idx]
             match Storage.get entity State.Transform with
             | ValueSome t ->
                 let direction = Vector2.Normalize(mov.Position - t.Position)
                 t.Position <- t.Position + direction * mov.Speed * dt
             | ValueNone -> ()
-        )
 
 module AutoRotation =
     let update (dt:float32) =
-        runThreaded 4 State.AutoRotation.Data.Count (fun idx ->
+        for idx=0 to State.AutoRotation.Data.Count-1 do
             let struct (entity,rot) = State.AutoRotation.Data.[idx]
             match Storage.get entity State.Transform with
             | ValueSome t -> t.Rotation <- t.Rotation + rot.RotateBy * dt
             | ValueNone   -> ()
-        )
 
 module Timer =
     let mutable state = ResizeArray<Timed<unit>>()
@@ -221,9 +221,11 @@ module Animations =
             | ValueNone          -> ()
 
     let update (deltaTime:float32) =
-        runThreaded 4 State.Animation.Data.Count (fun idx ->
+        // runThreaded 4 State.Animation.Data.Count (fun idx ->
+        Parallel.For(0, State.Animation.Data.Count, (fun idx ->
             updateAnimation deltaTime idx
-        )
+        ))
+        |> ignore
 
 module Drawing =
     let mousePosition mousePos fontSize (whereToDraw:Vector2) =

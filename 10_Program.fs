@@ -36,8 +36,8 @@ let boxes () =
     // 90000 boxes ->   75 fps |  600 fps (5000+)
     //
     let mutable makeParent = true
-    for x=1 to 300 do
-        for y=1 to 300 do
+    for x=1 to 100 do
+        for y=1 to 100 do
             boxes.Add (Entity.init (fun box ->
                 let t =
                     if makeParent then
@@ -258,10 +258,10 @@ let fixedUpdateTiming = 1.0f / 60.0f
 let fixedUpdate model (deltaTime:float32) =
     Systems.Timer.update deltaTime
     Async.RunSynchronously(async {
-        let! a = Async.StartChild (async{ Systems.AutoMovement.update deltaTime })
-        let! b = Async.StartChild (async{ Systems.AutoTargetPosition.update deltaTime })
-        let! c = Async.StartChild (async{ Systems.AutoRotation.update deltaTime })
         let! d = Async.StartChild (async{ Systems.Animations.update deltaTime })
+        let! a = Async.StartChild (async{ Systems.AutoMovement.update deltaTime })
+        let! c = Async.StartChild (async{ Systems.AutoRotation.update deltaTime })
+        let! b = Async.StartChild (async{ Systems.AutoTargetPosition.update deltaTime })
         do! a
         do! b
         do! c
@@ -526,6 +526,7 @@ let draw (model:Model) (deltaTime:float32) =
 
 [<EntryPoint;System.STAThread>]
 let main argv =
+    printfn "Is GC ServerMode %b" System.Runtime.GCSettings.IsServerGC
     System.Runtime.GCSettings.LatencyMode <- System.Runtime.GCLatencyMode.SustainedLowLatency
     // The Game uses a virtual Render solution. It renders everything to a
     // RenderTexture with that Resolution. Then this RenderTexture is scaled to
@@ -547,8 +548,9 @@ let main argv =
             let h = w / targetAspect
             w,h
 
+    // Raylib.SetConfigFlags(ConfigFlags.VSyncHint ||| ConfigFlags.FullscreenMode )
     Raylib.InitWindow(screenWidth,screenHeight,"Raylib Demo")
-    Raylib.SetTargetFPS(60)
+    // Raylib.SetTargetFPS(75)
     Raylib.SetMouseCursor(MouseCursor.Crosshair)
     // We need to set a Mouse Scale so we don't get the screen position, we instead get
     // a position that is conform with our virtual Resolution. When a virtual resolution
@@ -567,7 +569,7 @@ let main argv =
     State.uiCamera <- Camera2D(Vector2.Zero, Vector2.Zero, 0f, 1f) // Camera for GUI elements
 
     // Set Object Culling Properties
-    Systems.View.offset <- 64f
+    Systems.View.offset <- 128f
     Systems.View.halfX  <- float32 virtualWidth  / 2f
     Systems.View.halfY  <- float32 virtualHeight / 2f
 
