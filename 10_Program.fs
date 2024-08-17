@@ -238,12 +238,6 @@ let initModel () =
             else State (Choice1Of2 (state-1))
     ))
 
-    // Periodically run Garbage Collector
-    // Systems.Timer.addTimer (Timer.every (sec 3.0) () (fun _ _ ->
-    //     System.GC.Collect(0, System.GCCollectionMode.Optimized, false)
-    //     State ()
-    // ))
-
     let gameState = {
         Knight         = knight
         MouseRectangle = NoRectangle
@@ -555,8 +549,13 @@ let showGCInfo () =
 
 [<EntryPoint;System.STAThread>]
 let main argv =
-    printfn "Is GC ServerMode %b" System.Runtime.GCSettings.IsServerGC
+    // This enables a special LowLatency mode that should never block the application
+    // all GCs happens in the background. Only manual calls to System.GC.Collect()
+    // will block. Blocking still can occur when memory of the PC is low or under
+    // other curcumstances.
+    // See: https://devblogs.microsoft.com/dotnet/the-net-framework-4-5-includes-new-garbage-collector-enhancements-for-client-and-server-apps/
     System.Runtime.GCSettings.LatencyMode <- System.Runtime.GCLatencyMode.SustainedLowLatency
+
     // The Game uses a virtual Render solution. It renders everything to a
     // RenderTexture with that Resolution. Then this RenderTexture is scaled to
     // the window screen. Scaling tries to fit as much of the windows as it is
