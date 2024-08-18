@@ -630,7 +630,7 @@ let main argv =
         frameTime <- frameTime + deltaTime
         if frameTime >= 1f then
             frameTime <- frameTime - 1f
-            System.GC.Collect(0, System.GCCollectionMode.Forced, true)
+            System.GC.Collect(0, System.GCCollectionMode.Forced, false)
 
     // TODO: Proper Unloading of resources
     Raylib.UnloadRenderTexture(target)
