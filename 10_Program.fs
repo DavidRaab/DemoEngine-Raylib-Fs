@@ -31,11 +31,11 @@ let boxes () =
     // later game. Also removed testing just 3000 or 6000 boxes as framerates
     // are anyway too high for this less boxes.
     //
-    //                 All     | Culling (boxes visible)
-    //                ---------+----------
-    // 10000 boxes ->  680 fps | 1500 fps (3000+)
-    // 40000 boxes ->  180 fps |  800 fps (5000+)
-    // 90000 boxes ->   75 fps |  600 fps (5000+)
+    //                  All     | Culling (boxes visible)
+    //                 ---------+----------
+    // 10000 boxes ->  680  fps | 1700 fps (3000+)
+    // 40000 boxes ->  170  fps |  800 fps (5000+)
+    // 90000 boxes ->   60+ fps |  500 fps (5000+)
     //
     let mutable makeParent = true
     for x=1 to 100 do
@@ -292,7 +292,6 @@ let update (model:Model) (deltaTime:float32) =
                 model <- { model with MouseRectangle = mr }
             | _ -> ()
         model
-
 
     // A state machine, but will be replaced later by some library
     let nextKnightState previousState =
