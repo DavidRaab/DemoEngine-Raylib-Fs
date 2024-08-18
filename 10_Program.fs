@@ -248,14 +248,13 @@ let initModel () =
 let mutable knightState = IsIdle
 
 // A Fixed Update implementation that tuns at the specified fixedUpdateTiming
-let fixedUpdateTiming = 1.0f / 60.0f
-let fixedUpdate model (deltaTime:float32) =
-    Systems.Timer.update deltaTime
+let fixedUpdate model (dt:float32) =
+    Systems.Timer.update dt
     Async.RunSynchronously(async {
-        let! d = Async.StartChild (async{ Systems.Animations.update deltaTime })
-        let! a = Async.StartChild (async{ Systems.AutoMovement.update deltaTime })
-        let! c = Async.StartChild (async{ Systems.AutoRotation.update deltaTime })
-        let! b = Async.StartChild (async{ Systems.AutoTargetPosition.update deltaTime })
+        let! d = Async.StartChild (async{ Systems.Animations.update dt })
+        let! a = Async.StartChild (async{ Systems.AutoMovement.update dt })
+        let! c = Async.StartChild (async{ Systems.AutoRotation.update dt })
+        let! b = Async.StartChild (async{ Systems.AutoTargetPosition.update dt })
         do! a
         do! b
         do! c
@@ -264,8 +263,6 @@ let fixedUpdate model (deltaTime:float32) =
     Systems.Transform.update ()
     model
 
-let useFixedUpdate = true
-let mutable fixedUpdateElapsedTime = 0f
 let update (model:Model) (deltaTime:float32) =
     FPS.update deltaTime
 
@@ -387,37 +384,6 @@ let update (model:Model) (deltaTime:float32) =
             State.camera.Target <- newPos
         | _                           -> ()
 
-
-    // FixedUpdate Handling
-    let model =
-        if useFixedUpdate then
-            fixedUpdateElapsedTime <- fixedUpdateElapsedTime + deltaTime
-            if fixedUpdateElapsedTime >= fixedUpdateTiming then
-                fixedUpdateElapsedTime <- fixedUpdateElapsedTime - fixedUpdateTiming
-                fixedUpdate model fixedUpdateTiming
-            else
-                model
-        else
-            fixedUpdate model deltaTime
-
-    (*
-    // Vibration through Triggers
-    // printfn "%f %f" gamePad.Triggers.Left gamePad.Triggers.Right
-    GamePad.SetVibration(0,
-        gamePad.Triggers.Left,
-        gamePad.Triggers.Right
-    ) |> ignore
-
-    if keyboard.IsKeyDown Keys.Space then
-        ignore <| GamePad.SetVibration(0, 1.0f, 1.0f)
-
-    if GamePad.isPressed gamePad.Buttons.A then
-        printfn "Pressed A"
-
-    if GamePad.isPressed gamePad.Buttons.Back || keyboard.IsKeyDown Keys.Escape then
-        game.Exit()
-    *)
-
     model
 
 // Some begin/end helper functions
@@ -483,7 +449,7 @@ let drawUI model =
                 model.Boxes.RemoveAt(idx)
                 Entity.destroy e
 
-let draw (model:Model) (deltaTime:float32) =
+let draw (model:Model) (dt:float32) =
     beginTextureMode target (fun () ->
         Raylib.ClearBackground(Color.DarkBlue)
 
@@ -578,8 +544,9 @@ let main argv =
 
     // Raylib.SetConfigFlags(ConfigFlags.VSyncHint ||| ConfigFlags.FullscreenMode )
     Raylib.InitWindow(screenWidth,screenHeight, "Raylib Demo")
-    // Raylib.SetTargetFPS(75)
+    // Raylib.SetTargetFPS(60)
     Raylib.SetMouseCursor(MouseCursor.Crosshair)
+
     // We need to set a Mouse Scale so we don't get the screen position, we instead get
     // a position that is conform with our virtual Resolution. When a virtual resolution
     // of 640 x 360 is defined then GetMousePosition() will also return 640 x 360
@@ -612,11 +579,25 @@ let main argv =
             printfn "INFO: No GamePad %d" i
 
     // Game Loop
-    let mutable frameTime = 0f
+    let useFixedUpdate                 = true
+    let fixedUpdateTiming              = 1.0f / 60.0f
+    let mutable fixedUpdateElapsedTime = 0f
+    let mutable gcInterval = 0f
     while not (CBool.op_Implicit (Raylib.WindowShouldClose())) do
         // showGCInfo ()
         let deltaTime = Raylib.GetFrameTime ()
         model <- update model deltaTime
+
+        // FixedUpdate Handling - allows to run at a higher Hz than FPS
+        if useFixedUpdate then
+            fixedUpdateElapsedTime <- fixedUpdateElapsedTime + deltaTime
+            while fixedUpdateElapsedTime >= fixedUpdateTiming do
+                fixedUpdateElapsedTime <- fixedUpdateElapsedTime - fixedUpdateTiming
+                model <- fixedUpdate model fixedUpdateTiming
+        else
+            model <- fixedUpdate model deltaTime
+
+        // Draw World
         draw model deltaTime
 
         // Performs a forced blocking Gargabe Collection every second. Seems
@@ -627,9 +608,9 @@ let main argv =
         // just takes 1-2ms even with 90,000+ boxes. So it is better to have run
         // GC periodically and always with a very low timing overhead, so it
         // never causes stutter.
-        frameTime <- frameTime + deltaTime
-        if frameTime >= 1f then
-            frameTime <- frameTime - 1f
+        gcInterval <- gcInterval + deltaTime
+        if gcInterval >= 1f then
+            gcInterval <- gcInterval - 1f
             System.GC.Collect(0, System.GCCollectionMode.Forced, false)
 
     // TODO: Proper Unloading of resources
