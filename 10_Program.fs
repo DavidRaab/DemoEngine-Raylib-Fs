@@ -5,6 +5,8 @@ open MyGame
 open Storage
 open Model
 
+type Task = System.Threading.Tasks.Task
+
 // Some global variables
 let mutable assets : Assets = Unchecked.defaultof<_>
 
@@ -245,22 +247,15 @@ let initModel () =
     }
     gameState
 
-let runSystems dt = task {
-    let d = backgroundTask { Systems.Animations.update dt }
-    let a = backgroundTask { Systems.AutoMovement.update dt }
-    let c = backgroundTask { Systems.AutoRotation.update dt }
-    let b = backgroundTask { Systems.AutoTargetPosition.update dt }
-    do! a
-    do! b
-    do! c
-    do! d
-}
-
 // A Fixed Update implementation that tuns at the specified fixedUpdateTiming
 let fixedUpdate model (dt:float32) =
     Systems.Timer.update dt
-    let t = runSystems dt
-    t.Wait ()
+    let a = Task.Run (fun () -> Systems.Animations.update   dt )
+    let b = Task.Run (fun () -> Systems.AutoMovement.update dt )
+    let c = Task.Run (fun () -> Systems.AutoRotation.update dt )
+    let d = Task.Run (fun () -> Systems.AutoTargetPosition.update dt )
+    let tasks = Task.WhenAll([|a; b; c; d|])
+    tasks.Wait()
     Systems.Transform.update ()
     model
 

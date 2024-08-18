@@ -168,7 +168,6 @@ module AutoMovement =
             | ValueSome t -> t.Position <- t.Position + mov.Direction * dt
             | ValueNone   -> ()
 
-
 module AutoTargetPosition =
     let update (dt:float32) =
         for idx=0 to State.AutoTargetPosition.Data.Count-1 do
