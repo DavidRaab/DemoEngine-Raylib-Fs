@@ -245,24 +245,26 @@ let initModel () =
     }
     gameState
 
-let mutable knightState = IsIdle
+let runSystems dt = task {
+    let d = backgroundTask { Systems.Animations.update dt }
+    let a = backgroundTask { Systems.AutoMovement.update dt }
+    let c = backgroundTask { Systems.AutoRotation.update dt }
+    let b = backgroundTask { Systems.AutoTargetPosition.update dt }
+    do! a
+    do! b
+    do! c
+    do! d
+}
 
 // A Fixed Update implementation that tuns at the specified fixedUpdateTiming
 let fixedUpdate model (dt:float32) =
     Systems.Timer.update dt
-    Async.RunSynchronously(async {
-        let! d = Async.StartChild (async{ Systems.Animations.update dt })
-        let! a = Async.StartChild (async{ Systems.AutoMovement.update dt })
-        let! c = Async.StartChild (async{ Systems.AutoRotation.update dt })
-        let! b = Async.StartChild (async{ Systems.AutoTargetPosition.update dt })
-        do! a
-        do! b
-        do! c
-        do! d
-    })
+    let t = runSystems dt
+    t.Wait ()
     Systems.Transform.update ()
     model
 
+let mutable knightState = IsIdle
 let update (model:Model) (deltaTime:float32) =
     FPS.update deltaTime
 
