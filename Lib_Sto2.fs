@@ -89,8 +89,8 @@ module Sto2 =
         | false, _   -> false
         | true, keyA -> Storage.contains key data.Data.[keyA]
 
-    /// Get an Entry by specifiyng KeyB, it returns KeyA and the Value
-    let get (key:'KeyB) data : voption<'KeyA * 'Value> =
+    /// Get an Entry by specifying KeyB, it returns KeyA and the Value
+    let get (key:'KeyB) data : voption<struct ('KeyA * 'Value)> =
         match data.BToA.TryGetValue(key) with
         | false, _   -> ValueNone
         | true, keyA ->

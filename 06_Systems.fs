@@ -43,7 +43,7 @@ module Transform =
     // indicates when a parent has no transform defined and recursion ends.
     let rec calculateTransform (me:Transform) =
         match me with
-        | Local  t      -> ValueSome (t.Position,t.Rotation,t.Scale)
+        | Local  t      -> ValueSome (struct (t.Position,t.Rotation,t.Scale))
         | Parent parent ->
             match Storage.get parent.Parent State.Transform with
             | ValueSome parent ->
@@ -57,7 +57,7 @@ module Transform =
                         * Matrix.CreateRotationZ(float32 (Rad.fromDeg pRot)) // rotate by parent position
                         * Matrix.CreateTranslation(pPos.X, pPos.Y, 0f)       // translate by parent position
                     )
-                    ValueSome (pos,pRot+me.Rotation,scale)
+                    ValueSome (struct (pos,pRot+me.Rotation,scale))
             | ValueNone -> ValueNone
 
     let inline updateIndex idx =
