@@ -26,23 +26,18 @@ module Entity =
     ]
 
     let inline addTransform t entity =
-        Storage.insert entity t State.Transform
+        Storage.add entity t State.Transform
 
-    // I don't like it that it needs to try to fetch from one storage and then
-    // from another storage. I could use Sto2, but it shouldn't have any advantage.
-    // Even in Sto2 i need to fetch the mapping and then fetch again. With exactly
-    // asking two Storage this should be fine. But maybe someday i have a better
-    // optimization for it?
     let inline getTransform entity =
         Storage.get entity State.Transform
 
     let deleteTransform entity =
         Storage.remove entity State.Transform
 
-    let addAnimation  anim entity = Storage.insert entity anim State.Animation
-    let deleteAnimation    entity = Storage.remove entity      State.Animation
-    let addView layer view entity = Sto2.add    layer entity view State.View
-    let deleteView         entity = Sto2.remove       entity      State.View
+    let addAnimation  anim entity = Storage.add          entity anim State.Animation
+    let deleteAnimation    entity = Storage.remove       entity      State.Animation
+    let addView layer view entity = Sto2.add       layer entity view State.View
+    let deleteView         entity = Sto2.remove          entity      State.View
 
     let setAnimation name entity =
         match Storage.get entity State.Animation with

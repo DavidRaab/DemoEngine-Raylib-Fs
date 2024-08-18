@@ -110,15 +110,15 @@ module Sto2 =
         | false, _ ->
             let inner = dicGetOrInit keyA data.Data (fun () -> Storage.create ())
             dicAdd keyB keyA data.BToA
-            Storage.insert keyB value inner
+            Storage.add keyB value inner
         | true, mapping ->
             if mapping = keyA then
-                Storage.insert keyB value data.Data.[keyA]
+                Storage.add keyB value data.Data.[keyA]
             else
                 Storage.remove keyB data.Data.[mapping]
                 let inner = dicGetOrInit keyA data.Data (fun () -> Storage.create ())
                 dicAdd keyB keyA  data.BToA
-                Storage.insert keyB value inner
+                Storage.add keyB value inner
 
     let inline iter (keyA:'KeyA) ([<InlineIfLambda>] f : 'KeyB -> 'Value -> unit) data : unit =
         match data.Data.TryGetValue(keyA) with

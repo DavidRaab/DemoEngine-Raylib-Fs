@@ -13,8 +13,8 @@ module Storage =
         Data       = ResizeArray<struct('Key * 'Value)>()
     }
 
-    let length storage =
-        storage.Data.Count
+    let length storage = storage.Data.Count
+    let count  storage = storage.Data.Count
 
     let contains key (storage:T<'Key,'value>) : bool =
         if storage.KeyToIndex.ContainsKey(key) then true else false
@@ -28,6 +28,10 @@ module Storage =
         | false, _  -> ValueNone
 
     /// returns internal index for 'Key. Should not be cached as it can become invalid
+    /// This function should be used when there is an `get` followed by an `add`
+    /// operation. You get the index, with the index you can fetch the entry from
+    /// the data field and are able to overwrite the entry. Usually only useful
+    /// when data-field is a struct or an immutable type.
     let inline getIndex (key:'Key) storage : voption<int> =
         match storage.KeyToIndex.TryGetValue(key) with
         | true, idx -> ValueSome idx
@@ -39,7 +43,7 @@ module Storage =
         storage.Data.[index] <- struct (key,value)
 
     /// adds a key,value mapping. Either newly inserting or overwriting existing data
-    let insert (key:'Key) (value:'Value) storage =
+    let add (key:'Key) (value:'Value) storage : unit =
         match getIndex key storage with
         | ValueSome idx -> storage.Data.[idx] <- struct (key,value)
         | ValueNone     ->

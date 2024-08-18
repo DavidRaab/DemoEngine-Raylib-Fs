@@ -17,7 +17,7 @@ let boxes () =
             with Tint = Color.Black
         })
         e |> Entity.addTransform (Comp.createTransformXY 0f 0f)
-        State.AutoRotation |> Storage.insert e {
+        State.AutoRotation |> Storage.add e {
             RotateBy = 90f<deg>
         }
     )
@@ -54,7 +54,7 @@ let boxes () =
                 box |> Entity.addView Layer.BG2 (Comp.createViewFromSheets Center assets.Box)
                 box |> Entity.addAnimation (Comp.createAnimationFromSheets assets.Box)
 
-                State.AutoRotation |> Storage.insert box {
+                State.AutoRotation |> Storage.add box {
                     RotateBy = 90f<deg>
                 }
             ))
@@ -84,19 +84,19 @@ let boxes () =
                 | ValueSome _ -> ()
                 | ValueNone   ->
                     State.AutoMovement       |> Storage.remove box
-                    State.AutoTargetPosition |> Storage.insert box centerPosition
+                    State.AutoTargetPosition |> Storage.add box centerPosition
             else
                 match Storage.get box State.AutoMovement with
                 | ValueSome dir -> dir.Direction <- vec2 (randf -1f 1f) (randf -1f 1f) * 25f
                 | ValueNone     ->
                     State.AutoTargetPosition |> Storage.remove box
-                    State.AutoMovement       |> Storage.insert box {
+                    State.AutoMovement       |> Storage.add box {
                         Direction = vec2 (randf -1f 1f) (randf -1f 1f) * 25f
                     }
 
             match Storage.get box State.AutoRotation with
             | ValueNone ->
-                State.AutoRotation |> Storage.insert box {
+                State.AutoRotation |> Storage.add box {
                     RotateBy = (randf -30f 30f) * 1f<deg>
                 }
             | ValueSome rot ->
