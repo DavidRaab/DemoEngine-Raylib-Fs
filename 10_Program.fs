@@ -72,7 +72,7 @@ let boxes () =
     // structure if needed.
     let centerPosition = { Position = vec2 0f 0f; Speed = 25f }
     Systems.Timer.addTimer (Timer.every (sec 0.1) 0 (fun idx dt ->
-        let updatesPerCall = 1000 //boxes.Count / 10
+        let updatesPerCall = boxes.Count / 10
         let last           = (boxes.Count - 1)
         let max            = if idx+updatesPerCall > last then last else idx+updatesPerCall
         for i=idx to max do
