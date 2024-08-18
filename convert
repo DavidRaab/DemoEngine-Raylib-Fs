@@ -22,7 +22,7 @@ for my $file ( path('.')->children ) {
             };
         }
         else {
-            if ( $date >= $youngest->{date} ) {
+            if ( $date > $youngest->{date} ) {
                 $youngest = $new;
             }
             elsif ( $date == $youngest->{date} && $time > $youngest->{time} ) {
@@ -36,6 +36,7 @@ for my $file ( path('.')->children ) {
 }
 
 if ( defined $youngest ) {
+    printf "Converting %s\n", $youngest->{file};
     system(qw{dotnet-trace convert}, $youngest->{file}, qw{--format speedscope -o profile});
     exec(qw{firefox --new-tab https://www.speedscope.app/ })
 }
