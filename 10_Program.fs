@@ -238,12 +238,6 @@ let initModel () =
             else State (Choice1Of2 (state-1))
     ))
 
-    // Periodically run Garbage Collector
-    Systems.Timer.addTimer (Timer.every (sec 1.0) () (fun _ _ ->
-        System.GC.Collect(0, System.GCCollectionMode.Optimized, false)
-        State ()
-    ))
-
     let gameState = {
         Knight         = knight
         MouseRectangle = NoRectangle
