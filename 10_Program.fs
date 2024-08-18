@@ -70,7 +70,7 @@ let boxes () =
     // 40,000 objects immediately when it runs. But anyway with changed implementation
     // i couldn't notice any stutter. But also could anyway change it to a mutable
     // structure if needed.
-    let centerPosition = { Position = vec2 0f 0f; Speed = 25f }
+    let centerPosition = { Position = vec2 0f 0f; Speed = 10f }
     Systems.Timer.addTimer (Timer.every (sec 0.1) 0 (fun idx dt ->
         let updatesPerCall = boxes.Count / 10
         let last           = (boxes.Count - 1)
