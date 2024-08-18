@@ -25,28 +25,33 @@ type GamePad =
     | Start         = 16
 
 // Input Module
+[<NoComparison>]
 type ButtonState =
     | IsPressed
     | IsReleased
     | IsKeyDown
     | IsKeyUp
 
+[<NoEquality;NoComparison>]
 type GamePadThumbStick<'Action> = {
     Left:  option<Vector2 -> 'Action>
     Right: option<Vector2 -> 'Action>
 }
 
+[<NoEquality;NoComparison>]
 type GamePadTriggers<'Action> = {
     Left:  option<float32 -> 'Action>
     Right: option<float32 -> 'Action>
 }
 
+[<NoEquality;NoComparison>]
 type InputGamePad<'Action> = {
     Buttons:    list<GamePad * ButtonState * 'Action>
     ThumbStick: GamePadThumbStick<'Action>
     Trigger:    GamePadTriggers<'Action>
 }
 
+[<NoEquality;NoComparison>]
 type FMouseAction<'Action> =
     | Screen of (Vector2 -> 'Action)
     | World  of (Vector2 -> 'Action)
@@ -58,12 +63,14 @@ type MouseButton =
     | XButton1 = 3
     | XButton2 = 4
 
+[<NoEquality;NoComparison>]
 type InputMouse<'Action> = {
     Buttons:     list<MouseButton * ButtonState * FMouseAction<'Action>>
     ScrollWheel: option<float32 -> 'Action>
     Position:    option<Vector2 -> 'Action>
 }
 
+[<NoEquality;NoComparison>]
 type Input<'Action> = {
     Keyboard: list<Key * ButtonState * 'Action>
     GamePad:  InputGamePad<'Action>
@@ -174,6 +181,7 @@ module Input =
 
         actions
 
+[<NoEquality;NoComparison>]
 type FPS = {
     // Those contains FPS for last second and the highest FrameTime captured during it
     mutable Updates:      int
@@ -234,6 +242,7 @@ module Gui =
             Raylib.IsMouseButtonPressed(Raylib_cs.MouseButton.Left)
             |> CBool.op_Implicit
 
+    [<NoEquality;NoComparison>]
     type Style = {
         FontSize:             int
         FontColor:            Color

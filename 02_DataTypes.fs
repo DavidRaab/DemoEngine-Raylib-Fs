@@ -2,16 +2,18 @@ namespace MyGame
 open Raylib_cs
 open System.Numerics
 
-[<Struct>]
+[<Struct;NoComparison>]
 type Entity =
     Entity of int
 
+[<NoEquality;NoComparison>]
 type LocalTransform = {
     mutable Position: Vector2
     mutable Scale:    Vector2
     mutable Rotation: float32<deg>
 }
 
+[<NoEquality;NoComparison>]
 type ParentTransform = {
     Parent: Entity
     mutable Position:       Vector2
@@ -22,6 +24,7 @@ type ParentTransform = {
     mutable GlobalRotation: float32<deg>
 }
 
+[<NoEquality;NoComparison>]
 type Transform =
     | Local  of LocalTransform
     | Parent of ParentTransform
@@ -63,7 +66,7 @@ type Transform =
         member inline self.GlobalScale
             with get () = match self with | Local t -> t.Scale    | Parent t -> t.GlobalScale
 
-[<Struct>]
+[<Struct;NoComparison>]
 type Origin =
     | TopLeft
     | Top
@@ -88,12 +91,14 @@ type Layer =
     | FG1 = 5uy
 
 /// A sprite is a selection from a Texture2D
+[<NoEquality;NoComparison>]
 type Sprite = {
     Texture: Texture2D
     SrcRect: Rectangle
 }
 
 /// View component. An Entity needs this component to be shown on screen
+[<NoEquality;NoComparison>]
 type View = {
     mutable Sprite:   Sprite
     mutable Rotation: float32<deg>
@@ -103,17 +108,20 @@ type View = {
 }
 
 /// A collection of multiple sprites used in an Animation
+[<NoEquality;NoComparison>]
 type Sheet = {
     Sprites:       Sprite array
     FrameDuration: float32
     IsLoop:        bool
 }
 
+[<NoEquality;NoComparison>]
 type Sheets = {
     Sheets:  Map<string,Sheet>
     Default: string
 }
 
+[<NoEquality;NoComparison>]
 type Animation = {
     Sheets:                Sheets
     mutable CurrentSheet:  Sheet
@@ -122,15 +130,18 @@ type Animation = {
     mutable MaxSprites:    int
 }
 
+[<NoEquality;NoComparison>]
 type AutoMovement = {
     mutable Direction : Vector2
 }
 
+[<NoEquality;NoComparison>]
 type AutoTargetPosition = {
     mutable Position : Vector2
     mutable Speed    : float32
 }
 
+[<NoEquality;NoComparison>]
 type AutoRotation = {
     mutable RotateBy : float32<deg>
 }
