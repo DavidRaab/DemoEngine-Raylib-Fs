@@ -45,20 +45,20 @@ module Transform =
         match me with
         | Local  t      -> ValueSome (t.Position,t.Rotation,t.Scale)
         | Parent parent ->
-            match Entity.getTransform parent.Parent with
-            | ValueNone        -> ValueNone
+            match Storage.get parent.Parent State.Transform with
             | ValueSome parent ->
                 match calculateTransform parent with
                 | ValueNone                    -> ValueNone
                 | ValueSome (pPos,pRot,pScale) ->
-                    let scale   = Vector2.create (pScale.X * me.Scale.X) (pScale.Y * me.Scale.Y)
-                    let pos     = Vector2.Transform(
+                    let scale = Vector2.create (pScale.X * me.Scale.X) (pScale.Y * me.Scale.Y)
+                    let pos   = Vector2.Transform(
                         me.Position,
                         Matrix.CreateScale(scale.X, scale.Y, 0f)
                         * Matrix.CreateRotationZ(float32 (Rad.fromDeg pRot)) // rotate by parent position
-                        * Matrix.CreateTranslation(Vector3(pPos,0f))            // translate by parent position
+                        * Matrix.CreateTranslation(pPos.X, pPos.Y, 0f)       // translate by parent position
                     )
                     ValueSome (pos,pRot+me.Rotation,scale)
+            | ValueNone -> ValueNone
 
     let inline updateIndex idx =
         // Get a Transform
@@ -70,17 +70,16 @@ module Transform =
             match calculateTransform t with
             | ValueNone -> ()
             | ValueSome (pos,rot,scale) ->
-                p.GlobalPosition <- pos
-                p.GlobalRotation <- rot
-                p.GlobalScale    <- scale
+                p.GlobalPosition.X <- pos.X
+                p.GlobalPosition.Y <- pos.Y
+                p.GlobalRotation   <- rot
+                p.GlobalScale.X    <- scale.X
+                p.GlobalScale.Y    <- scale.Y
         | Local  _ -> ()
 
     /// Updates all Global fields of every Transform with a Parent
     let update () =
-        // runThreaded 4 State.Transform.Data.Count (fun idx ->
-        Parallel.For(0, State.Transform.Data.Count, (fun idx ->
-            updateIndex idx
-        ))
+        Parallel.For(0, State.Transform.Data.Count, updateIndex)
         |> ignore
 
 // View System draws entity
