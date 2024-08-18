@@ -612,11 +612,25 @@ let main argv =
             printfn "INFO: No GamePad %d" i
 
     // Game Loop
+    let mutable frameTime = 0f
     while not (CBool.op_Implicit (Raylib.WindowShouldClose())) do
         // showGCInfo ()
         let deltaTime = Raylib.GetFrameTime ()
         model <- update model deltaTime
         draw model deltaTime
+
+        // Performs a forced blocking Gargabe Collection every second. Seems
+        // silly todo that in a game? If the GC is not forced, then .Net actually
+        // ignores a Collect() call most of the time. It still just triggers here
+        // and then, but when it does it, usually it takes 12ms or so. But forcing
+        // it every second means GC defenitely always run, and when it does, it usually
+        // just takes 1-2ms even with 90,000+ boxes. So it is better to have run
+        // GC periodically and always with a very low timing overhead, so it
+        // never causes stutter.
+        frameTime <- frameTime + deltaTime
+        if frameTime >= 1f then
+            frameTime <- frameTime - 1f
+            System.GC.Collect(0, System.GCCollectionMode.Forced, true)
 
     // TODO: Proper Unloading of resources
     Raylib.UnloadRenderTexture(target)
