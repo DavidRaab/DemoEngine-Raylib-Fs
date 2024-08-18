@@ -215,10 +215,7 @@ module Animations =
             | ValueNone          -> ()
 
     let update (deltaTime:float32) =
-        // runThreaded 4 State.Animation.Data.Count (fun idx ->
-        Parallel.For(0, State.Animation.Data.Count, (fun idx ->
-            updateAnimation deltaTime idx
-        ))
+        Parallel.For(0, State.Animation.Data.Count, updateAnimation deltaTime)
         |> ignore
 
 module Drawing =
