@@ -7,15 +7,8 @@ type Entity =
     Entity of int
 
 [<NoEquality;NoComparison>]
-type LocalTransform = {
-    mutable Position: Vector2
-    mutable Scale:    Vector2
-    mutable Rotation: float32<deg>
-}
-
-[<NoEquality;NoComparison>]
-type ParentTransform = {
-    Parent: Entity
+type Transform = {
+    mutable Parent:         voption<Entity>
     mutable Position:       Vector2
     mutable GlobalPosition: Vector2
     mutable Scale:          Vector2
@@ -23,48 +16,6 @@ type ParentTransform = {
     mutable Rotation:       float32<deg>
     mutable GlobalRotation: float32<deg>
 }
-
-[<NoEquality;NoComparison>]
-type Transform =
-    | Local  of LocalTransform
-    | Parent of ParentTransform
-    with
-        member inline self.Position
-            with get ()      =
-                match self with
-                | Local  t -> t.Position
-                | Parent t -> t.Position
-            and  set (value) =
-                match self with
-                | Local  t -> t.Position <- value
-                | Parent t -> t.Position <- value
-
-        member inline self.Rotation
-            with get () =
-                match self with
-                | Local  t -> t.Rotation
-                | Parent t -> t.Rotation
-            and set(value) =
-                match self with
-                | Local  t -> t.Rotation <- value
-                | Parent t -> t.Rotation <- value
-
-        member inline self.Scale
-            with get () =
-                match self with
-                | Local  t -> t.Scale
-                | Parent t -> t.Scale
-            and set (value) =
-                match self with
-                | Local  t -> t.Scale <- value
-                | Parent t -> t.Scale <- value
-
-        member inline self.GlobalPosition
-            with get () = match self with | Local t -> t.Position | Parent t -> t.GlobalPosition
-        member inline self.GlobalRotation
-            with get () = match self with | Local t -> t.Rotation | Parent t -> t.GlobalRotation
-        member inline self.GlobalScale
-            with get () = match self with | Local t -> t.Scale    | Parent t -> t.GlobalScale
 
 [<Struct;NoComparison>]
 type Origin =

@@ -42,10 +42,10 @@ module Transform =
     // returns an voption because it is called recursively on transform. ValueNone
     // indicates when a parent has no transform defined and recursion ends.
     let rec calculateTransform (me:Transform) =
-        match me with
-        | Local  t      -> ValueSome (struct (t.Position,t.Rotation,t.Scale))
-        | Parent parent ->
-            match Storage.get parent.Parent State.Transform with
+        match me.Parent with
+        | ValueNone        -> ValueSome (struct (me.Position,me.Rotation,me.Scale))
+        | ValueSome parent ->
+            match Storage.get parent State.Transform with
             | ValueSome parent ->
                 match calculateTransform parent with
                 | ValueNone                    -> ValueNone
@@ -63,19 +63,14 @@ module Transform =
     let inline updateIndex idx =
         // Get a Transform
         let struct (_,t) = State.Transform.Data.[idx]
-        // When it is Local we don't need to calculate anything. But
-        // TransformParent should anyway never contain a Local.
-        match t with
-        | Parent p ->
-            match calculateTransform t with
-            | ValueNone -> ()
-            | ValueSome (pos,rot,scale) ->
-                p.GlobalPosition.X <- pos.X
-                p.GlobalPosition.Y <- pos.Y
-                p.GlobalRotation   <- rot
-                p.GlobalScale.X    <- scale.X
-                p.GlobalScale.Y    <- scale.Y
-        | Local  _ -> ()
+        match calculateTransform t with
+        | ValueNone -> ()
+        | ValueSome (pos,rot,scale) ->
+            t.GlobalPosition.X <- pos.X
+            t.GlobalPosition.Y <- pos.Y
+            t.GlobalRotation   <- rot
+            t.GlobalScale.X    <- scale.X
+            t.GlobalScale.Y    <- scale.Y
 
     /// Updates all Global fields of every Transform with a Parent
     let update () =

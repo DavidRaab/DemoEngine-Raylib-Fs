@@ -79,7 +79,7 @@ module Comp =
     /// its like an additional type declaration. The Compiler/IDE immediately knows
     /// which record you wanna create and which fields are needed. Also reads
     /// nicely in written code.
-    let createTransform (st:LocalTransform) : Transform = Local st
+    let createTransform (st:Transform) : Transform = st
     let createView      (st:View)      : View      = st
     let createSprite    (st:Sprite)    : Sprite    = st
     let createSheet     (st:Sheet)     : Sheet     =
@@ -98,9 +98,13 @@ module Comp =
     let createAutoRotation       (st:AutoRotation)       : AutoRotation       = st
 
     let createTransformXY x y = createTransform {
-        Position = Vector2(x,y)
-        Scale    = Vector2.One
-        Rotation = 0f<deg>
+        Parent         = ValueNone
+        Position       = Vector2(x,y)
+        GlobalPosition = Vector2(x,y)
+        Scale          = Vector2.One
+        GlobalScale    = Vector2.One
+        Rotation       = 0f<deg>
+        GlobalRotation = 0f<deg>
     }
 
     let createSpriteTexture (tex:Texture2D) = createSprite {
@@ -142,31 +146,14 @@ module Comp =
         }
 
     /// Adds a Parent to a Transform. Or overwrites Parent when it already has one.
-    let addTransformParent parent t =
+    let addTransformParent parent t : Transform =
         // Actually the Global fields must be calculated by fetching the Transform
         // of the Entity. But i don't have access to that data here. It's only
         // available when i have State. So i just initialize this fields to
         // Vector2(0,0). This is okay, because at the end of every frame the
         // Global fields should be updated/calculated.
-        match t with
-        | Local t -> Parent {
-                Parent          = parent
-                Position        = t.Position
-                GlobalPosition  = Vector2.Zero
-                Scale           = t.Scale
-                GlobalScale     = Vector2.One
-                Rotation        = t.Rotation
-                GlobalRotation  = 0f<deg>
-            }
-        | Parent t -> Parent {
-                Parent          = parent
-                Position        = t.Position
-                GlobalPosition  = Vector2.Zero
-                Scale           = t.Scale
-                GlobalScale     = Vector2.One
-                Rotation        = t.Rotation
-                GlobalRotation  = 0f<deg>
-            }
+        t.Parent <- ValueSome parent
+        t
 
     /// set rotation on a transform by transforming the Vector2 to a rotation
     let inline setTransformRotationV vector (t:Transform) : unit =
