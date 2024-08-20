@@ -165,7 +165,9 @@ module AutoMovement =
         for idx=0 to State.AutoMovement.Data.Count-1 do
             let struct (entity,mov) = State.AutoMovement.Data.[idx]
             match Storage.get entity State.Transform with
-            | ValueSome t -> t.Position <- t.Position + mov.Direction * dt
+            | ValueSome t ->
+                t.Position <- t.Position + (mov.Direction * dt)
+                t.Rotation <- t.Rotation + (mov.RotateBy  * dt)
             | ValueNone   -> ()
 
 module AutoTargetPosition =
@@ -177,14 +179,6 @@ module AutoTargetPosition =
                 let direction = Vector2.Normalize(mov.Position - t.Position)
                 t.Position <- t.Position + direction * mov.Speed * dt
             | ValueNone -> ()
-
-module AutoRotation =
-    let update (dt:float32) =
-        for idx=0 to State.AutoRotation.Data.Count-1 do
-            let struct (entity,rot) = State.AutoRotation.Data.[idx]
-            match Storage.get entity State.Transform with
-            | ValueSome t -> t.Rotation <- t.Rotation + rot.RotateBy * dt
-            | ValueNone   -> ()
 
 module Timer =
     let mutable state = ResizeArray<Timed<unit>>()

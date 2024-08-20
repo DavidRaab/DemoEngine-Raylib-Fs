@@ -84,15 +84,11 @@ type Animation = {
 [<NoEquality;NoComparison>]
 type AutoMovement = {
     mutable Direction : Vector2
+    mutable RotateBy  : float32<deg>
 }
 
 [<NoEquality;NoComparison>]
 type AutoTargetPosition = {
     mutable Position : Vector2
     mutable Speed    : float32
-}
-
-[<NoEquality;NoComparison>]
-type AutoRotation = {
-    mutable RotateBy : float32<deg>
 }

@@ -95,7 +95,6 @@ module Comp =
     let createAnimation (st:Animation) : Animation = st
     let createAutoMovement       (st:AutoMovement)       : AutoMovement       = st
     let createAutoTargetPosition (st:AutoTargetPosition) : AutoTargetPosition = st
-    let createAutoRotation       (st:AutoRotation)       : AutoRotation       = st
 
     let createTransformXY x y = createTransform {
         Parent         = ValueNone

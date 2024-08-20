@@ -20,4 +20,3 @@ module State =
     let Animation          = Storage.create<Entity,Animation> ()
     let AutoMovement       = Storage.create<Entity,AutoMovement>  ()
     let AutoTargetPosition = Storage.create<Entity,AutoTargetPosition> ()
-    let AutoRotation       = Storage.create<Entity,AutoRotation> ()

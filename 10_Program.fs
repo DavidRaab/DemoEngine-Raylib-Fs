@@ -19,8 +19,9 @@ let boxes () =
             with Tint = Color.Black
         })
         e |> Entity.addTransform (Comp.createTransformXY 0f 0f)
-        State.AutoRotation |> Storage.add e {
-            RotateBy = 90f<deg>
+        State.AutoMovement |> Storage.add e {
+            Direction = Vector2.Zero
+            RotateBy  = 90f<deg>
         }
     )
 
@@ -56,8 +57,9 @@ let boxes () =
                 box |> Entity.addView Layer.BG2 (Comp.createViewFromSheets Center assets.Box)
                 box |> Entity.addAnimation (Comp.createAnimationFromSheets assets.Box)
 
-                State.AutoRotation |> Storage.add box {
-                    RotateBy = 90f<deg>
+                State.AutoMovement |> Storage.add box {
+                    Direction = Vector2.Zero
+                    RotateBy  = 90f<deg>
                 }
             ))
 
@@ -89,20 +91,15 @@ let boxes () =
                     State.AutoTargetPosition |> Storage.add box centerPosition
             else
                 match Storage.get box State.AutoMovement with
-                | ValueSome dir -> dir.Direction <- vec2 (randf -1f 1f) (randf -1f 1f) * 25f
+                | ValueSome dir ->
+                    dir.Direction <- vec2 (randf -1f 1f) (randf -1f 1f) * 25f
+                    dir.RotateBy  <- dir.RotateBy + (randf -30f 30f) * 1f<deg>
                 | ValueNone     ->
                     State.AutoTargetPosition |> Storage.remove box
                     State.AutoMovement       |> Storage.add box {
                         Direction = vec2 (randf -1f 1f) (randf -1f 1f) * 25f
+                        RotateBy  = (randf -30f 30f) * 1f<deg>
                     }
-
-            match Storage.get box State.AutoRotation with
-            | ValueNone ->
-                State.AutoRotation |> Storage.add box {
-                    RotateBy = (randf -30f 30f) * 1f<deg>
-                }
-            | ValueSome rot ->
-                rot.RotateBy <- rot.RotateBy + (randf -30f 30f) * 1f<deg>
 
         if max = last
         then State 0
@@ -252,9 +249,8 @@ let fixedUpdate model (dt:float32) =
     Systems.Timer.update dt
     let a = Task.Run (fun () -> Systems.Animations.update   dt )
     let b = Task.Run (fun () -> Systems.AutoMovement.update dt )
-    let c = Task.Run (fun () -> Systems.AutoRotation.update dt )
-    let d = Task.Run (fun () -> Systems.AutoTargetPosition.update dt )
-    let tasks = Task.WhenAll([|a; b; c; d|])
+    let c = Task.Run (fun () -> Systems.AutoTargetPosition.update dt )
+    let tasks = Task.WhenAll([|a; b; c|])
     tasks.Wait()
     Systems.Transform.update ()
     model
