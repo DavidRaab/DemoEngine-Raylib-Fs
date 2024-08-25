@@ -25,7 +25,8 @@ let boxes () =
         }
     )
 
-    let boxes = ResizeArray<_>()
+    let boxes       = ResizeArray<_>()
+    let parentBoxes = ResizeArray<_>()
     // Changed the test so half ob boxes are local and the other half has
     // a parent. This is also a good test as updating the transform has to
     // check if something is local or parent. So more realistic workload for a
@@ -39,29 +40,47 @@ let boxes () =
     // 90000 boxes ->   60+ fps |  500 fps (5000+)
     //
     let mutable makeParent = true
-    for x=1 to 100 do
-        for y=1 to 100 do
-            boxes.Add (Entity.init (fun box ->
-                let t =
-                    if makeParent then
-                        // this cost a lot of performance because rotation/position/scale of all 3.000 boxes
-                        // must be computed with a matrix calculated of the parent.
-                        makeParent <- not makeParent
-                        Comp.createTransformXY (float32 x * 11f) (float32 y * 11f)
-                        |>Comp.addTransformParent boxesOrigin
-                    else
-                        makeParent <- not makeParent
-                        Comp.createTransformXY (float32 x * 11f) (float32 y * 11f)
+    for x=1 to 200 do
+        for y=1 to 200 do
+            let box = Entity.create ()
+            let t =
+                if makeParent then
+                    makeParent <- not makeParent
+                    parentBoxes.Add(box)
 
-                box |> Entity.addTransform t
-                box |> Entity.addView Layer.BG2 (Comp.createViewFromSheets Center assets.Box)
-                box |> Entity.addAnimation (Comp.createAnimationFromSheets assets.Box)
+                    // let parents move into random direction
+                    State.AutoMovement |> Storage.add box {
+                        Direction = Vector2.Zero
+                        RotateBy  = 90f<deg>
+                    }
 
-                State.AutoMovement |> Storage.add box {
-                    Direction = Vector2.Zero
-                    RotateBy  = 90f<deg>
-                }
-            ))
+                    // this cost a lot of performance because rotation/position/scale of all 3.000 boxes
+                    // must be computed with a matrix calculated of the parent.
+                    Comp.createTransformXY (float32 x * 11f) (float32 y * 11f)
+                    |> Comp.addTransformParent boxesOrigin
+                else
+                    makeParent <- not makeParent
+                    boxes.Add(box)
+
+                    // let local boxes move along a path
+                    State.PathWalking |> Storage.add box (Comp.createPath (randf 50f 150f) [|
+                        vec2   0f  500f
+                        vec2   0f    0f
+                        vec2 250f -250f
+                        vec2 500f    0f
+                        vec2   0f    0f
+                        vec2 500f  500f
+                        vec2 500f    0f
+                        vec2   0f  500f
+                        vec2 500f  500f
+                    |])
+                    Comp.createTransformXY (float32 x * 11f) (float32 y * 11f)
+
+            box |> Entity.addTransform t
+            box |> Entity.addView Layer.BG2 (Comp.createViewFromSheets Center assets.Box)
+            box |> Entity.addAnimation (Comp.createAnimationFromSheets assets.Box)
+
+            ()
 
     // let all boxes move
     // With 40,000 boxes it caused stutter. Because every second i iterated through
@@ -69,18 +88,14 @@ let boxes () =
     // instead of updating all i just update some boxes every call. So work is split
     // across several frames.
     // Another option would be to put the work on another Thread that don't block
-    // the main Thread. But some Stutter may also be caused by GC. As Movement is
-    // an immutable data-structure at the moment and updating all means it creates
-    // 40,000 objects immediately when it runs. But anyway with changed implementation
-    // i couldn't notice any stutter. But also could anyway change it to a mutable
-    // structure if needed.
+    // the main Thread.
     let centerPosition = { Position = vec2 0f 0f; Speed = 10f }
     Systems.Timer.addTimer (Timer.every (sec 0.1) 0 (fun idx dt ->
-        let updatesPerCall = boxes.Count / 10
-        let last           = (boxes.Count - 1)
+        let updatesPerCall = parentBoxes.Count / 10
+        let last           = (parentBoxes.Count - 1)
         let max            = if idx+updatesPerCall > last then last else idx+updatesPerCall
         for i=idx to max do
-            let box = boxes.[i]
+            let box = parentBoxes.[i]
 
             // 10% of all boxes will move to world position 0,0
             if State.rng.NextSingle() < 0.1f then
@@ -250,7 +265,8 @@ let fixedUpdate model (dt:float32) =
     let a = Task.Run (fun () -> Systems.Animations.update   dt )
     let b = Task.Run (fun () -> Systems.AutoMovement.update dt )
     let c = Task.Run (fun () -> Systems.AutoTargetPosition.update dt )
-    let tasks = Task.WhenAll([|a; b; c|])
+    let d = Task.Run (fun () -> Systems.PathWalking.update dt )
+    let tasks = Task.WhenAll([|a; b; c; d|])
     tasks.Wait()
     Systems.Transform.update ()
     model

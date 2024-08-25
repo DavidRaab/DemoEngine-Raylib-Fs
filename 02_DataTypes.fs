@@ -92,3 +92,17 @@ type AutoTargetPosition = {
     mutable Position : Vector2
     mutable Speed    : float32
 }
+
+type PathWalkingState =
+    | NotStarted = 0
+    | Walking    = 1
+    | Finished   = 2
+
+[<NoEquality;NoComparison>]
+type PathWalking = {
+    Path:  Vector2 array
+    Speed: float32
+    mutable State:     PathWalkingState
+    mutable Current:   int
+    mutable Direction: Vector2 // Already has the Speed applied
+}

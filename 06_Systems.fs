@@ -244,3 +244,50 @@ module Drawing =
         let rect = Rectangle.fromVectors start stop
         Raylib.DrawRectangleRec(rect, Raylib.ColorAlpha(color, 0.1f))
         Raylib.DrawRectangleLinesEx(rect, float32 thickness, color)
+
+module PathWalking =
+    let update (dt:float32) =
+        let finished = ResizeArray<_>()
+        for (entity,path) in State.PathWalking.Data do
+            match Storage.get entity State.Transform with
+            | ValueNone   -> ()
+            | ValueSome t ->
+                match path.State with
+                | PathWalkingState.NotStarted ->
+                    if path.Path.Length = 0 then
+                        path.State <- PathWalkingState.Finished
+                    else
+                        let target    = path.Path.[0]
+                        let direction = Vector2.Normalize(target - t.Position) * path.Speed
+                        t.Position <- t.Position + (direction * dt)
+                        path.Current   <- 0
+                        path.Direction <- direction
+                        path.State     <- PathWalkingState.Walking
+                | PathWalkingState.Walking ->
+                    let target    = path.Path.[path.Current]
+                    let direction = path.Direction
+
+                    // When does the entity reach its target? Currently i just
+                    // check if a minimum distance is reached. But this is
+                    // prone to error with fast moving objects. Maybe make the
+                    // minimum distance configurable? Or do a better check if
+                    // we move beyond the target point.
+                    let next = path.Current + 1
+                    if Vector2.DistanceSquared(target, t.Position) <= 25f then
+                        if next < path.Path.Length then
+                            let target    = path.Path.[next]
+                            let direction = Vector2.Normalize(target - t.Position) * path.Speed
+                            t.Position <- t.Position + (path.Direction * dt)
+                            path.Current   <- next
+                            path.Direction <- direction
+                        else
+                            path.State <- PathWalkingState.Finished
+                    else
+                        t.Position <- t.Position + (path.Direction * dt)
+                | PathWalkingState.Finished ->
+                    finished.Add(entity)
+                    // We cannot delete while iterating
+                | _ ->
+                    failwithf "New PathWalkingState defined, but no Code for handling this case. Review Systems.PathWalking.update"
+        for entity in finished do
+            Storage.remove entity State.PathWalking

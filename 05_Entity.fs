@@ -56,3 +56,4 @@ module Entity =
         Storage.remove entity State.Animation
         Storage.remove entity State.AutoMovement
         Storage.remove entity State.AutoTargetPosition
+        Storage.remove entity State.PathWalking

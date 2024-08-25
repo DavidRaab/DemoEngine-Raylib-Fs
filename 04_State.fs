@@ -18,5 +18,6 @@ module State =
     let Transform          = Storage.create<Entity,Transform> ()
     let View               = Sto2.create<Layer, Entity, View> ()
     let Animation          = Storage.create<Entity,Animation> ()
-    let AutoMovement       = Storage.create<Entity,AutoMovement>  ()
+    let AutoMovement       = Storage.create<Entity,AutoMovement> ()
     let AutoTargetPosition = Storage.create<Entity,AutoTargetPosition> ()
+    let PathWalking        = Storage.create<Entity,PathWalking> ()

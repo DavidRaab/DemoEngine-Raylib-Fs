@@ -92,9 +92,18 @@ module Comp =
         if st.Sheets.Count = 0 then
             failwithf "Cannot create Sheets. Sheets must have at least one item."
         st
-    let createAnimation (st:Animation) : Animation = st
+    let createAnimation          (st:Animation)          : Animation          = st
     let createAutoMovement       (st:AutoMovement)       : AutoMovement       = st
     let createAutoTargetPosition (st:AutoTargetPosition) : AutoTargetPosition = st
+    let createPathWalking        (st:PathWalking)        : PathWalking        = st
+
+    let createPath speed path = createPathWalking {
+        Path      = path
+        Speed     = speed
+        State     = PathWalkingState.NotStarted
+        Current   = 0
+        Direction = Vector2.Zero
+    }
 
     let createTransformXY x y = createTransform {
         Parent         = ValueNone
@@ -143,6 +152,7 @@ module Comp =
             CurrentSprite = 0
             MaxSprites    = sheet.Sprites.Length
         }
+
 
     /// Adds a Parent to a Transform. Or overwrites Parent when it already has one.
     let addTransformParent parent t : Transform =
