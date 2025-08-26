@@ -62,7 +62,7 @@ module Timer =
         ))
 
     /// The same as `create` but expects seconds instead of a `TimeSpan`
-    let seconds seconds f =
+    let seconds (seconds:float) f =
         create (System.TimeSpan.FromSeconds seconds) f
 
     /// A function is executed for the given duration. A state is passed

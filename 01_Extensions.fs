@@ -62,7 +62,7 @@ module Extensions =
             )
         )
 
-    let inline sec sec : TimeSpan =
+    let inline sec (sec:float) : TimeSpan =
         TimeSpan.FromSeconds sec
 
     let inline clamp (min:float) max value =
